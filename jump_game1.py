@@ -6,11 +6,12 @@ RED = (255, 0, 0)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([20,20])
+        self.width = 20
+        self.image = pygame.Surface([self.width,self.width])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = size[0]//2
-        self.rect.y = size[1] - 20
+        self.rect.y = size[1] - self.width
         self.direction = 'up'
         self.speed = 20
         self.terminal_velocity = 23
@@ -23,6 +24,10 @@ class Player(pygame.sprite.Sprite):
             self.reverse()
             self.rect.y = 480
         self.change_speed()
+        if self.rect.x > size[0] - self.width:
+            self.rect.x = size[0] - self.width
+        elif self.rect.x < 1:
+            self.rect.x = 1
     def change_speed(self):
         if self.speed == 0:
             self.reverse
