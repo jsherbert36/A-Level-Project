@@ -1,4 +1,4 @@
-import numpy,math,pygame
+import math,pygame,random
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -13,21 +13,24 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = size[0]//2
         self.rect.y = size[1] - self.width
         self.direction = 'up'
-        self.speed = 20
-        self.terminal_velocity = 23
+        self.normal_speed = 16
+        self.speed = self.normal_speed
+        self.terminal_velocity = 20
     def update(self):
         if self.direction == 'up':
             self.rect.y -= self.speed
         elif self.direction == 'down':
             self.rect.y += self.speed
-        if self.rect.y > 480:
+        if self.rect.y > size[1] - self.width:
             self.reverse()
-            self.rect.y = 480
+            self.rect.y = size[1] - self.width
         self.change_speed()
         if self.rect.x > size[0] - self.width:
             self.rect.x = size[0] - self.width
         elif self.rect.x < 1:
             self.rect.x = 1
+        if self.speed > self.terminal_velocity:
+            self.speed = self.terminal_velocity
     def change_speed(self):
         if self.speed == 0:
             self.reverse
@@ -41,16 +44,16 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'down'
         elif self.direction == 'down':
             self.direction = 'up'
-            if self.speed < 18
-        if self.speed > self.terminal_velocity:
-            self.speed = self.terminal_velocity
+            self.speed = self.normal_speed
+        
             
 class Computer(Player):
     pass
 class Block(pygame.sprite.Sprite):
-    def __init__(self,position):
+    def __init__(self,position,block_width):
         super().__init__()
-        self.image = pygame.Surface([80,20])
+        self.block_width = block_width
+        self.image = pygame.Surface([self.block_width,20])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = position[0]
@@ -65,16 +68,24 @@ def gameplay():
     player_group = pygame.sprite.Group()
     block_group = pygame.sprite.Group()
     player = Player()
-    test_block = Block([size[0]//2,400])
-    block_group.add(test_block)
+    block_width = 80
+    block_y = size[1]
+    block_x = random.randint(80,size[0] - 80) 
+    while block_y > 70:
+        block_y -= random.randint(50,100)
+        block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
+        new_block = Block([block_x,block_y],block_width)
+        block_group.add(new_block)
+        all_sprites_group.add(new_block)
+        
     player_group.add(player)
-    all_sprites_group.add(player,test_block)
+    all_sprites_group.add(player)
     game_over = False
     clock = pygame.time.Clock()
 
 # -------------- Main Program Loop ---------------- #
     while not game_over:
-
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
@@ -85,11 +96,16 @@ def gameplay():
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
-            player.rect.x += 5
+            player.rect.x += 7
         elif keys[pygame.K_LEFT]:
-            player.rect.x -= 5
-        if pygame.sprite.spritecollide(player,block_group,False):
-            player.reverse()
+            player.rect.x -= 7
+        block_hit_list = pygame.sprite.spritecollide(player,block_group,False)
+        for block in block_hit_list:
+            print(player.direction)
+            if player.rect.bottom > block.rect.top and player.direction == 'down':
+                player.reverse()
+                
+                
 
         screen.fill(BLACK)
         player.update()
@@ -101,7 +117,7 @@ def gameplay():
 
 
 pygame.init()
-size = (700,500)
-screen = pygame.display.set_mode(size)
+size = (1280,720)
+screen = pygame.display.set_mode(size,pygame.RESIZABLE)
 gameplay()
 pygame.quit()
