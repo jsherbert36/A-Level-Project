@@ -45,6 +45,7 @@ class Player(pygame.sprite.Sprite):
             
 class Computer(Player):
     pass
+
 class Block(pygame.sprite.Sprite):
     def __init__(self,position,block_width):
         super().__init__()
@@ -55,7 +56,6 @@ class Block(pygame.sprite.Sprite):
         self.rect.x = position[0]
         self.rect.y = position[1]
         
-   
 class Alien():
     pass
     
