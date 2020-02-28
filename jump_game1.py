@@ -13,9 +13,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = size[0]//2
         self.rect.y = size[1] - self.width
         self.direction = 'up'
-        self.normal_speed = 16
+        self.normal_speed = 20
         self.speed = self.normal_speed
-        self.terminal_velocity = 20
+        self.terminal_velocity = 22
     def update(self):
         if self.direction == 'up':
             self.rect.y -= self.speed
@@ -33,13 +33,12 @@ class Player(pygame.sprite.Sprite):
             self.speed = self.terminal_velocity
     def change_speed(self):
         if self.speed == 0:
-            self.reverse
+            self.reverse()
         if self.direction == 'up':
             self.speed -= 1
         elif self.direction == 'down':
             self.speed += 1
     def reverse(self):
-        print(self.speed)
         if self.direction == 'up':
             self.direction = 'down'
         elif self.direction == 'down':
@@ -82,7 +81,7 @@ def gameplay():
     all_sprites_group.add(player)
     game_over = False
     clock = pygame.time.Clock()
-
+    count = 0
 # -------------- Main Program Loop ---------------- #
     while not game_over:
         
@@ -101,10 +100,13 @@ def gameplay():
             player.rect.x -= 7
         block_hit_list = pygame.sprite.spritecollide(player,block_group,False)
         for block in block_hit_list:
-            print(player.direction)
             if player.rect.bottom > block.rect.top and player.direction == 'down':
                 player.reverse()
-                
+                count += 1
+        if count % 20 == 0:
+            print(count)
+            print(player.direction)
+            print(player.speed)
                 
 
         screen.fill(BLACK)
