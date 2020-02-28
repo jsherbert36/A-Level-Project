@@ -21,9 +21,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= self.speed
         elif self.direction == 'down':
             self.rect.y += self.speed
-        if self.rect.y > size[1] - self.width:
-            self.reverse()
-            self.rect.y = size[1] - self.width
         self.change_speed()
         if self.rect.x > size[0] - self.width:
             self.rect.x = size[0] - self.width
@@ -68,11 +65,14 @@ def gameplay():
     block_group = pygame.sprite.Group()
     player = Player()
     block_width = 80
-    block_y = size[1]
-    block_x = random.randint(80,size[0] - 80) 
+    block_y = size[1] - 20
+    block_x = random.randint(80,size[0] - 80)
+    start_block = Block([0,block_y],size[0])
+    block_group.add(start_block)
+    all_sprites_group.add(start_block)
     while block_y > 70:
         block_y -= random.randint(50,100)
-        block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
+        block_x += random.randint(-1 * min((block_x - 100),550),min(550,size[0] - block_x - 100))
         new_block = Block([block_x,block_y],block_width)
         block_group.add(new_block)
         all_sprites_group.add(new_block)
@@ -82,6 +82,7 @@ def gameplay():
     game_over = False
     clock = pygame.time.Clock()
     count = 0
+    fall = False
 # -------------- Main Program Loop ---------------- #
     while not game_over:
         
@@ -92,22 +93,32 @@ def gameplay():
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
 
-
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
-            player.rect.x += 7
+            player.rect.x += 9
         elif keys[pygame.K_LEFT]:
-            player.rect.x -= 7
+            player.rect.x -= 9
         block_hit_list = pygame.sprite.spritecollide(player,block_group,False)
         for block in block_hit_list:
+            fall = False
             if player.rect.bottom > block.rect.top and player.direction == 'down':
                 player.reverse()
                 count += 1
-        if count % 20 == 0:
-            print(count)
-            print(player.direction)
-            print(player.speed)
-                
+        if player.rect.y < 200 :
+            block_y -= random.randint(50,100)
+            block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
+            new_block = Block([block_x,block_y],block_width)
+            block_group.add(new_block)
+            all_sprites_group.add(new_block)
+            for sprite in all_sprites_group:
+                sprite.rect.y += 3
+        if fall == True:
+            for sprite in all_sprites_group:
+                sprite.rect.y -= 10
+        if player.rect.y > size[1] - 20 and start_block.rect.y > size[1]:
+            fall = True
+        if player.rect.bottom > start_block.rect.top:
+            start_block.rect.y = size[1] - 20
 
         screen.fill(BLACK)
         player.update()
