@@ -105,6 +105,7 @@ def gameplay():
                 player.reverse()
                 count += 1
         if player.rect.y < 200 :
+            print('new_block')
             block_y -= random.randint(50,100)
             block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
             new_block = Block([block_x,block_y],block_width)
