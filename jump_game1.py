@@ -1,4 +1,4 @@
-import math,pygame,random
+ import math,pygame,random
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
     def change_speed(self):
         if self.speed == 0:
             self.reverse()
-        if self.direction == 'up':
+        if self.direction == 'up':       
             self.speed -= 1
         elif self.direction == 'down':
             self.speed += 1
