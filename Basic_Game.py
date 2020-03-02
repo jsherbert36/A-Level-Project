@@ -3,10 +3,14 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+PATH = sys.path[0]
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.width = 20
+        #Logo = pygame.image.load(os.path.join(SCRIPT_PATH,"images","logo.bmp")).convert()
+        #Logo = pygame.transform.smoothscale(Logo, (550,293))
         self.image = pygame.Surface([self.width,self.width])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
