@@ -1,4 +1,4 @@
- import math,pygame,random
+import math,pygame,random
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -104,23 +104,29 @@ def gameplay():
             if player.rect.bottom > block.rect.top and player.direction == 'down':
                 player.reverse()
                 count += 1
-        if player.rect.y < 200 :
-            print('new_block')
-            block_y -= random.randint(50,100)
-            block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
-            new_block = Block([block_x,block_y],block_width)
-            block_group.add(new_block)
-            all_sprites_group.add(new_block)
+        if player.rect.y < 200 :            
+            if block_y > 0:
+                block_y -= random.randint(50,100)
+                block_x += random.randint(-1 * min((block_x - 100),400),min(400,size[0] - block_x - 100))
+                new_block = Block([block_x,block_y],block_width)
+                block_group.add(new_block)
+                all_sprites_group.add(new_block)
             for sprite in all_sprites_group:
                 sprite.rect.y += 3
+            block_y += 3
         if fall == True:
             for sprite in all_sprites_group:
                 sprite.rect.y -= 10
-        if player.rect.y > size[1] - 20 and start_block.rect.y > size[1]:
+            block_y -= 10
+        if player.rect.y > size[1] - 30 and start_block.rect.bottom > size[1]:
             fall = True
-        if player.rect.bottom > start_block.rect.top:
-            start_block.rect.y = size[1] - 20
-
+        else:
+            fall = False
+        if block.rect.bottom < size[1]:
+            for sprite in all_sprites_group:
+                sprite.rect.y += (size[1] - block.rect.bottom)
+            block_y += (size[1] - block.rect.bottom)
+        
         screen.fill(BLACK)
         player.update()
         player_group.draw(screen)
