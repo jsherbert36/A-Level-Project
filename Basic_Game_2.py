@@ -177,8 +177,9 @@ def gameplay():
                 elif block_type == 'still':
                     new_block = Block([block_x,block_y], block_width)
                 elif block_type == 'vertical':
-                    block_y -= vertical_distance + temp_y
+                    block_y -= (vertical_distance + temp_y)
                     new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
+                    block_y -= vertical_distance
                 block_group.add(new_block)
                 all_sprites_group.add(new_block)
             block_y = move(3,block_y,all_sprites_group)
@@ -219,7 +220,7 @@ def gameover():
 
 pygame.init()
 size = (1280,720)
-screen = pygame.display.set_mode(size,pygame.RESIZABLE)
+screen = pygame.display.set_mode(size)
 background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
 background_image_1 = pygame.transform.smoothscale(background_image_1, size)
 if gameplay() == 'gameover':
