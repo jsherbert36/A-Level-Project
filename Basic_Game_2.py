@@ -10,11 +10,14 @@ PATH = sys.path[0]
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.width = 20
-        #Logo = pygame.image.load(os.path.join(SCRIPT_PATH,"images","logo.bmp")).convert()
-        #Logo = pygame.transform.smoothscale(Logo, (550,293))
-        self.image = pygame.Surface([self.width,self.width])
-        self.image.fill(BLACK)
+        self.width = 40
+        self.image_list = []
+        for i in range(1,9):
+            temp_image = pygame.image.load(os.path.join(PATH,"images",("frame-"+str(i)+ ".png"))).convert()
+            temp_image.set_colorkey(BLACK)
+            self.image_list.append(pygame.transform.smoothscale(temp_image, [self.width, self.width]))
+        self.image = self.image_list[0]
+        self.image_num = 0
         self.rect = self.image.get_rect()
         self.rect.x = size[0]//2
         self.rect.y = size[1] - self.width
@@ -23,6 +26,9 @@ class Player(pygame.sprite.Sprite):
         self.speed = self.normal_speed
         self.terminal_velocity = 22
     def update(self):
+        self.image_num = (self.image_num + 1 ) % 14
+        if self.image_num % 2 == 0:
+            self.image = self.image_list[self.image_num//2]
         if self.direction == 'up':
             self.rect.y -= self.speed
         elif self.direction == 'down':
@@ -57,7 +63,8 @@ class Block(pygame.sprite.Sprite):
         super().__init__()
         self.position = position
         self.block_width = block_width
-        self.image = pygame.Surface([self.block_width,20])
+        self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
+        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
@@ -119,16 +126,15 @@ def gameplay():
     player_group = pygame.sprite.Group()
     block_group = pygame.sprite.Group()
     player = Player()
-    block_width = 80
+    block_width = 90
     vertical_distance = 60
     block_y = size[1] - 20
     block_x = random.randint(80,size[0] - 80)
     start_block = Block([0,block_y],size[0])
-    #block_group.add(start_block)
     all_sprites_group.add(start_block)
     while block_y > 70:
         block_y -= random.randint(50,100)
-        block_x = (block_x + (random.randint(-350,350))) % (size[0] - block_width)
+        block_x = (block_x + (random.randint(-330,330))) % (size[0] - block_width)
         new_block = Block([block_x,block_y], block_width)
         block_group.add(new_block)
         all_sprites_group.add(new_block)
