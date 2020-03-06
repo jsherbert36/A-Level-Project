@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os
+import math,pygame,random,sys,os,time
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -150,6 +150,7 @@ def gameplay():
     count = 0
     current_block = 0
     current_pos = [size[0]//2,size[1] - 20]
+    horizontal_direction = 'none'
     
 # -------------- Main Program Loop ---------------- #
     while not game_over:
@@ -161,14 +162,9 @@ def gameplay():
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
         
-        #keys = pygame.key.get_pressed()
-        #if keys[pygame.K_RIGHT]:
-        #    player.rect.x += 9
-        #elif keys[pygame.K_LEFT]:
-        #    player.rect.x -= 9
         for block in block_group:
             if block.number == current_block + 1:
-                next_pos = block.rect.center
+                next_pos = block.rect.topleft
                 next_type = block.Type
                 if block.Type == 'Still':
                     next_centre = block.rect.center
@@ -178,7 +174,7 @@ def gameplay():
                     next_centre = block.position[0]
                 next_direction = block.direction 
         
-        horizontal_direction = Test_API.move(player.rect.center,current_pos,next_pos,next_type,next_centre,player.normal_speed,player.speed,size,player.direction,next_direction)
+        horizontal_direction = Test_API.move(player.rect.center,current_pos,next_pos,next_type,next_centre,player.normal_speed,player.speed,size,player.direction,next_direction,block_width,horizontal_direction)
         if horizontal_direction == 'right':
             player.rect.x += 9
         elif horizontal_direction == 'left':
@@ -196,7 +192,7 @@ def gameplay():
             if player.rect.bottom > start_block.rect.top and player.direction == 'down':
                 player.reverse()
                 count += 1
-        if player.rect.y < 200 :            
+        if player.rect.y < size[0]//4 :            
             if block_y > 0:
                 temp_y = random.randint(50,100)
                 block_y -= temp_y
@@ -216,16 +212,16 @@ def gameplay():
                 block_count += 1
                 block_group.add(new_block)
                 all_sprites_group.add(new_block)
-            block_y = move(3,block_y,all_sprites_group)
+            block_y = move(4,block_y,all_sprites_group)
             
         for block in block_group:
             if block.rect.y > size[1] + 50:
                 block.kill()
         
         if player.rect.bottom > size[1]:
-            #game_over = True
-            #return 'gameover'
-            player.reverse()
+            game_over = True
+            return 'gameover'
+            #player.reverse()
             
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
@@ -238,25 +234,20 @@ def gameplay():
 
 def gameover():
     font = pygame.font.Font('freesansbold.ttf', 70) 
-    exit = False
-    clock = pygame.time.Clock()
-    while not exit:
-        screen.fill(BLACK) 
-        Play = font.render('GAME OVER', True, WHITE)
-        PlayRect = Play.get_rect()
-        PlayRect.center = (size[0]//2, size[1]//2)
-        screen.blit(Play, PlayRect) 
-        pygame.display.flip()
-        for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    exit = True
+    
+    screen.fill(BLACK) 
+    Play = font.render('GAME OVER', True, WHITE)
+    PlayRect = Play.get_rect()
+    PlayRect.center = (size[0]//2, size[1]//2)
+    screen.blit(Play, PlayRect) 
+    pygame.display.flip()
+    for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        exit = True
-                        pygame.quit()
-            
-        clock.tick(60)
+    time.sleep(1)
 
 
 pygame.init()
@@ -264,7 +255,7 @@ size = (1280,720)
 screen = pygame.display.set_mode(size)
 background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
 background_image_1 = pygame.transform.smoothscale(background_image_1, size)
-if gameplay() == 'gameover':
-    gameover()
-else:
-    pygame.quit()
+while True:
+    if gameplay() == 'gameover':
+        gameover()
+
