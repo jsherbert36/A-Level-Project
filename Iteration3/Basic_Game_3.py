@@ -4,8 +4,7 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 PATH = sys.path[0]
-
-
+import Test_API
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -59,8 +58,10 @@ class Computer(Player):
     pass
 
 class Block(pygame.sprite.Sprite):
-    def __init__(self,position,block_width):
+    def __init__(self,position,block_width,number,Type = 'Still'):
         super().__init__()
+        self.Type = Type
+        self.number = number
         self.position = position
         self.block_width = block_width
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
@@ -68,12 +69,13 @@ class Block(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
+        self.direction = None
     def update(self):
         pass
 
 class SideBlock(Block):
-    def __init__(self,position,block_width):
-        super().__init__(position,block_width)
+    def __init__(self,position,block_width,number):
+        super().__init__(position,block_width,number,'Horizontal')
         self.direction = random.choice(['left','right'])
         self.distance = 120
         if self.position[0] > size[0] - self.distance - self.block_width:
@@ -92,8 +94,8 @@ class SideBlock(Block):
 
 
 class VerticalBlock(Block):
-    def __init__(self,position,block_width,distance):
-        super().__init__(position,block_width)
+    def __init__(self,position,block_width,distance,number):
+        super().__init__(position,block_width,number,'Vertical')
         self.direction = random.choice(['up','down'])
         self.distance = distance
         
@@ -107,7 +109,6 @@ class VerticalBlock(Block):
         elif self.direction == 'down':
             self.rect.y += 1
 
-        
         
 class Alien():
     pass
@@ -125,17 +126,20 @@ def gameplay():
     all_sprites_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     block_group = pygame.sprite.Group()
+    block_count = 0
     player = Player()
     block_width = 90
     vertical_distance = 60
     block_y = size[1] - 20
     block_x = random.randint(80,size[0] - 80)
-    start_block = Block([0,block_y],size[0])
+    start_block = Block([0,block_y],size[0],block_count)
+    block_count += 1
     all_sprites_group.add(start_block)
     while block_y > 70:
         block_y -= random.randint(50,100)
         block_x = (block_x + (random.randint(-330,330))) % (size[0] - block_width)
-        new_block = Block([block_x,block_y], block_width)
+        new_block = Block([block_x,block_y], block_width,block_count)
+        block_count += 1
         block_group.add(new_block)
         all_sprites_group.add(new_block)
         
@@ -144,6 +148,8 @@ def gameplay():
     game_over = False
     clock = pygame.time.Clock()
     count = 0
+    current_block = 0
+    current_pos = [size[0]//2,size[1] - 20]
     
 # -------------- Main Program Loop ---------------- #
     while not game_over:
@@ -154,15 +160,36 @@ def gameplay():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_RIGHT]:
+        
+        #keys = pygame.key.get_pressed()
+        #if keys[pygame.K_RIGHT]:
+        #    player.rect.x += 9
+        #elif keys[pygame.K_LEFT]:
+        #    player.rect.x -= 9
+        for block in block_group:
+            if block.number == current_block + 1:
+                next_pos = block.rect.center
+                next_type = block.Type
+                if block.Type == 'Still':
+                    next_centre = block.rect.center
+                elif block.Type == 'Vertical':
+                    next_centre = block.position[1]
+                elif block.Type == 'Horizontal':
+                    next_centre = block.position[0]
+                next_direction = block.direction 
+        
+        horizontal_direction = Test_API.move(player.rect.center,current_pos,next_pos,next_type,next_centre,player.normal_speed,player.speed,size,player.direction,next_direction)
+        if horizontal_direction == 'right':
             player.rect.x += 9
-        elif keys[pygame.K_LEFT]:
+        elif horizontal_direction == 'left':
             player.rect.x -= 9
+        
         block_hit_list = pygame.sprite.spritecollide(player,block_group,False)
         for block in block_hit_list:
+            
             if player.rect.bottom > block.rect.top and player.direction == 'down':
+                current_block = block.number
+                current_pos = block.rect.center
                 player.reverse()
                 count += 1
         if player.rect.colliderect(start_block):
@@ -179,24 +206,27 @@ def gameplay():
                 else:
                     block_type = 'still'
                 if block_type == 'move':
-                    new_block = SideBlock([block_x,block_y], block_width)
+                    new_block = SideBlock([block_x,block_y], block_width,block_count)
                 elif block_type == 'still':
-                    new_block = Block([block_x,block_y], block_width)
+                    new_block = Block([block_x,block_y], block_width,block_count)
                 elif block_type == 'vertical':
                     block_y -= (vertical_distance + temp_y)
-                    new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
+                    new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance,block_count)
                     block_y -= vertical_distance
+                block_count += 1
                 block_group.add(new_block)
                 all_sprites_group.add(new_block)
             block_y = move(3,block_y,all_sprites_group)
+            
         for block in block_group:
             if block.rect.y > size[1] + 50:
                 block.kill()
         
         if player.rect.bottom > size[1]:
-            game_over = True
-            return 'gameover'
-        
+            #game_over = True
+            #return 'gameover'
+            player.reverse()
+            
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
         player_group.draw(screen)
@@ -231,7 +261,7 @@ def gameover():
 
 pygame.init()
 size = (1280,720)
-screen = pygame.display.set_mode(size,pygame.FULLSCREEN)
+screen = pygame.display.set_mode(size)
 background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
 background_image_1 = pygame.transform.smoothscale(background_image_1, size)
 if gameplay() == 'gameover':
