@@ -24,9 +24,12 @@ class Player(pygame.sprite.Sprite):
         self.normal_speed = 20
         self.speed = self.normal_speed
         self.terminal_velocity = 22
+        self.height = 0
+        self.score = 0
+
     def update(self):
         self.image_num = (self.image_num + 1 ) % 14
-        if self.image_num % 2 == 0:
+        if self.image_num % 3 == 0:
             self.image = self.image_list[self.image_num//2]
         if self.direction == 'up':
             self.rect.y -= self.speed
@@ -123,6 +126,7 @@ def move(direction,block_y,sprite_group):
     
     
 def gameplay():
+    score_font = pygame.font.Font(os.path.join(PATH,"Score_Font.ttf"), 40) 
     all_sprites_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     block_group = pygame.sprite.Group()
@@ -142,15 +146,16 @@ def gameplay():
         block_count += 1
         block_group.add(new_block)
         all_sprites_group.add(new_block)
-        
     player_group.add(player)
     all_sprites_group.add(player)
     game_over = False
     clock = pygame.time.Clock()
-    count = 0
     current_block = 0
     current_pos = [size[0]//2,size[1] - 20]
+    current_centre = [0,0]
+    current_type = 'Still'
     horizontal_direction = 'none'
+   
     
 # -------------- Main Program Loop ---------------- #
     while not game_over:
@@ -158,23 +163,28 @@ def gameplay():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
+                pygame.quit()
+                return 'gameover'
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
         
+        player.height = start_block.rect.top - player.rect.bottom 
+
+        if player.height > player.score:
+            player.score = player.height
+
         for block in block_group:
             if block.number == current_block + 1:
                 next_pos = block.rect.topleft
                 next_type = block.Type
                 if block.Type == 'Still':
                     next_centre = block.rect.center
-                elif block.Type == 'Vertical':
-                    next_centre = block.position[1]
-                elif block.Type == 'Horizontal':
-                    next_centre = block.position[0]
+                else: 
+                    next_centre = block.position
                 next_direction = block.direction 
         
-        horizontal_direction = Test_API.move(player.rect.center,current_pos,next_pos,next_type,next_centre,player.normal_speed,player.speed,size,player.direction,next_direction,block_width,horizontal_direction)
+        horizontal_direction = Test_API.move(player.rect.center,current_pos,next_pos,next_type,next_centre,player.normal_speed,player.speed,size,player.direction,next_direction,block_width,horizontal_direction,current_type,current_centre)
         if horizontal_direction == 'right':
             player.rect.x += 9
         elif horizontal_direction == 'left':
@@ -186,12 +196,12 @@ def gameplay():
             if player.rect.bottom > block.rect.top and player.direction == 'down':
                 current_block = block.number
                 current_pos = block.rect.center
+                current_type = block.Type
+                current_centre = block.position
                 player.reverse()
-                count += 1
         if player.rect.colliderect(start_block):
             if player.rect.bottom > start_block.rect.top and player.direction == 'down':
                 player.reverse()
-                count += 1
         if player.rect.y < size[0]//4 :            
             if block_y > 0:
                 temp_y = random.randint(50,100)
@@ -222,21 +232,24 @@ def gameplay():
             game_over = True
             return 'gameover'
             #player.reverse()
+
             
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
         player_group.draw(screen)
         block_group.draw(screen)
 
+        score_display = score_font.render(str(player.score), True, BLACK)
+        screen.blit(score_display,(size[0]//20, size[1]//20))
+
         pygame.display.flip()
 
         clock.tick(60)
 
 def gameover():
-    font = pygame.font.Font('freesansbold.ttf', 70) 
-    
+    gameover_font = pygame.font.Font('freesansbold.ttf', 80) 
     screen.fill(BLACK) 
-    Play = font.render('GAME OVER', True, WHITE)
+    Play = gameover_font.render('GAME OVER', True, WHITE)
     PlayRect = Play.get_rect()
     PlayRect.center = (size[0]//2, size[1]//2)
     screen.blit(Play, PlayRect) 
