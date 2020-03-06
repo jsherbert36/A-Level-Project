@@ -189,6 +189,9 @@ def gameplay():
                 block_group.add(new_block)
                 all_sprites_group.add(new_block)
             block_y = move(3,block_y,all_sprites_group)
+        for block in block_group:
+            if block.rect.y > size[1] + 50:
+                block.kill()
         
         if player.rect.bottom > size[1]:
             game_over = True
@@ -217,16 +220,18 @@ def gameover():
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     exit = True
+                    pygame.quit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         exit = True
+                        pygame.quit()
             
         clock.tick(60)
 
 
 pygame.init()
 size = (1280,720)
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(size,pygame.FULLSCREEN)
 background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
 background_image_1 = pygame.transform.smoothscale(background_image_1, size)
 if gameplay() == 'gameover':

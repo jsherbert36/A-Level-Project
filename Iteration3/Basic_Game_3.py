@@ -1,18 +1,23 @@
-import math,pygame,random
+import math,pygame,random,sys,os
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 PATH = sys.path[0]
 
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.width = 20
-        #Logo = pygame.image.load(os.path.join(SCRIPT_PATH,"images","logo.bmp")).convert()
-        #Logo = pygame.transform.smoothscale(Logo, (550,293))
-        self.image = pygame.Surface([self.width,self.width])
-        self.image.fill(WHITE)
+        self.width = 40
+        self.image_list = []
+        for i in range(1,9):
+            temp_image = pygame.image.load(os.path.join(PATH,"images",("frame-"+str(i)+ ".png"))).convert()
+            temp_image.set_colorkey(BLACK)
+            self.image_list.append(pygame.transform.smoothscale(temp_image, [self.width, self.width]))
+        self.image = self.image_list[0]
+        self.image_num = 0
         self.rect = self.image.get_rect()
         self.rect.x = size[0]//2
         self.rect.y = size[1] - self.width
@@ -21,6 +26,9 @@ class Player(pygame.sprite.Sprite):
         self.speed = self.normal_speed
         self.terminal_velocity = 22
     def update(self):
+        self.image_num = (self.image_num + 1 ) % 14
+        if self.image_num % 2 == 0:
+            self.image = self.image_list[self.image_num//2]
         if self.direction == 'up':
             self.rect.y -= self.speed
         elif self.direction == 'down':
@@ -55,8 +63,8 @@ class Block(pygame.sprite.Sprite):
         super().__init__()
         self.position = position
         self.block_width = block_width
-        self.image = pygame.Surface([self.block_width,20])
-        self.image.fill(WHITE)
+        self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
+        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
@@ -70,8 +78,8 @@ class SideBlock(Block):
         self.distance = 120
         if self.position[0] > size[0] - self.distance - self.block_width:
             self.position[0] = size[0] - self.distance - self.block_width
-        elif self.position[0] < self.distance - block_width//2:
-            self.position[0] = self.distance - block_width//2
+        elif self.position[0] < self.distance + block_width//2:
+            self.position[0] = self.distance + block_width//2
     def update(self):
         if self.rect.centerx > self.position[0] + self.distance:
             self.direction = 'left'
@@ -118,16 +126,15 @@ def gameplay():
     player_group = pygame.sprite.Group()
     block_group = pygame.sprite.Group()
     player = Player()
-    block_width = 80
+    block_width = 90
     vertical_distance = 60
     block_y = size[1] - 20
     block_x = random.randint(80,size[0] - 80)
     start_block = Block([0,block_y],size[0])
-    block_group.add(start_block)
     all_sprites_group.add(start_block)
     while block_y > 70:
         block_y -= random.randint(50,100)
-        block_x = (block_x + (random.randint(-350,350))) % (size[0] - block_width)
+        block_x = (block_x + (random.randint(-330,330))) % (size[0] - block_width)
         new_block = Block([block_x,block_y], block_width)
         block_group.add(new_block)
         all_sprites_group.add(new_block)
@@ -137,8 +144,7 @@ def gameplay():
     game_over = False
     clock = pygame.time.Clock()
     count = 0
-    fall = False
-    started = False
+    
 # -------------- Main Program Loop ---------------- #
     while not game_over:
         
@@ -156,16 +162,20 @@ def gameplay():
             player.rect.x -= 9
         block_hit_list = pygame.sprite.spritecollide(player,block_group,False)
         for block in block_hit_list:
-            fall = False
             if player.rect.bottom > block.rect.top and player.direction == 'down':
+                player.reverse()
+                count += 1
+        if player.rect.colliderect(start_block):
+            if player.rect.bottom > start_block.rect.top and player.direction == 'down':
                 player.reverse()
                 count += 1
         if player.rect.y < 200 :            
             if block_y > 0:
-                block_y -= random.randint(50,100)
-                block_x = (block_x + (random.randint(-350,350))) % (size[0] - block_width)
+                temp_y = random.randint(50,100)
+                block_y -= temp_y
+                block_x = (block_x + (random.randint(-340,340))) % (size[0] - block_width)
                 if block_y < 300:
-                    block_type = random.choice(['move','still','still','still','vertical'])
+                    block_type = random.choice(['move','still','still','still','still','vertical'])
                 else:
                     block_type = 'still'
                 if block_type == 'move':
@@ -173,28 +183,25 @@ def gameplay():
                 elif block_type == 'still':
                     new_block = Block([block_x,block_y], block_width)
                 elif block_type == 'vertical':
-                    block_y -= vertical_distance //2
+                    block_y -= (vertical_distance + temp_y)
                     new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
+                    block_y -= vertical_distance
                 block_group.add(new_block)
                 all_sprites_group.add(new_block)
             block_y = move(3,block_y,all_sprites_group)
-        if fall == True:
-            block_y = move(-15,block_y,all_sprites_group)
-        if player.rect.y > size[1] - 300 and start_block.rect.bottom > size[1]:
-            fall = True
-        else:
-            fall = False
-        if start_block.rect.y > size[1] + 100:
-            started = True
-        if player.rect.colliderect(start_block.rect) and started == True:
+        for block in block_group:
+            if block.rect.y > size[1] + 50:
+                block.kill()
+        
+        if player.rect.bottom > size[1]:
             game_over = True
             return 'gameover'
         
-        
-        screen.fill(BLACK)
+        screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
         player_group.draw(screen)
         block_group.draw(screen)
+
         pygame.display.flip()
 
         clock.tick(60)
@@ -213,16 +220,20 @@ def gameover():
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     exit = True
+                    pygame.quit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         exit = True
+                        pygame.quit()
             
         clock.tick(60)
 
 
 pygame.init()
 size = (1280,720)
-screen = pygame.display.set_mode(size,pygame.RESIZABLE)
+screen = pygame.display.set_mode(size,pygame.FULLSCREEN)
+background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
+background_image_1 = pygame.transform.smoothscale(background_image_1, size)
 if gameplay() == 'gameover':
     gameover()
 else:
