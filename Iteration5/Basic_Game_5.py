@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,time,neat,numpy
+import math,pygame,random,sys,os,time,neat,numpy,pickle
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -17,8 +17,8 @@ class Player(pygame.sprite.Sprite):
         self.image = self.image_list[0]
         self.image_num = 0
         self.rect = self.image.get_rect()
-        self.rect.x = numpy.random.randint(0,size[0])
-        self.rect.y = size[1] - self.width
+        self.rect.x = numpy.random.randint(0,SIZE[0])
+        self.rect.y = SIZE[1] - self.width
         self.direction = 'up'
         self.normal_speed = 20
         self.speed = self.normal_speed
@@ -26,7 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.height = 0
         self.score = 0
         self.current_block = 0
-        self.current_pos = [size[0]//2,size[1] - 20]
+        self.current_pos = [SIZE[0]//2,SIZE[1] - 20]
         self.horizontal_direction = 'none'
         self.alive = True
 
@@ -39,10 +39,10 @@ class Player(pygame.sprite.Sprite):
         elif self.direction == 'down':
             self.rect.y += self.speed
         self.change_speed()
-        if self.rect.x > size[0] - self.width + 10:
+        if self.rect.x > SIZE[0] - self.width + 10:
             self.rect.x = 1
         elif self.rect.x < 0:
-            self.rect.x = size[0] - self.width
+            self.rect.x = SIZE[0] - self.width
         if self.speed > self.terminal_velocity:
             self.speed = self.terminal_velocity
 
@@ -82,28 +82,6 @@ class Player(pygame.sprite.Sprite):
             if block.number == self.current_block + 1:
                 self.next_pos = block.rect.topleft
 
-    def think(self,size,block_width):
-        if abs(self.next_pos[0] - self.rect.centerx) > size[0]//2:
-            if self.rect.centerx < self.next_pos[0]:
-                self.temp_direction = 'left'
-            elif self.rect.centerx > self.next_pos[0]:
-                self.temp_direction = 'right'
-            else: 
-                self.temp_direction = 'none'
-        elif self.rect.centerx < self.next_pos[0]:
-            self.temp_direction = 'right'
-        elif self.rect.centerx > self.next_pos[0] + block_width:
-            self.temp_direction = 'left'
-        else:
-            self.temp_direction = 'none'
-        if self.horizontal_direction == 'none':
-            if self.current_pos[1] - self.rect.y > 40 and self.direction == 'up':
-                self.horizontal_direction = self.temp_direction
-            else: 
-                self.horizontal_direction = 'none'
-        else:
-            self.horizontal_direction = self.temp_direction
-
     def move(self):
         if self.horizontal_direction == 'right':
             self.rect.x += 9
@@ -135,80 +113,124 @@ def move(direction,block_y,block_list,player_list,start_block):
     block_y += direction
     return block_y
     
+def sigmoid(X):
+   return 1/(1+np.exp(-X))
     
-def gameplay():
+def gameplay(genomes,config):
+    global generation
+    generation += 1
     POPULATION_SIZE = 40
     score_font = pygame.font.Font("freesansbold.ttf", 35) 
     player_list = []
+    genome_list = []
+    nn_list = []
     block_list = []
     block_count = 0
-    for i in range(POPULATION_SIZE):
-        new_player = Player()
-        player_list.append(new_player)
+
+    for genome_id,genome in genomes:
+        genome.fitness = 0
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        nn_list.append(net)
+        player_list.append(Player())
+        genome_list.append(genome)
+
+
     block_width = 90
-    block_y = size[1] - 20
-    block_x = random.randint(80,size[0] - 80)
-    start_block = Block([0,block_y],size[0],block_count)
+    block_y = SIZE[1] - 20
+    block_x = random.randint(80,SIZE[0] - 80)
+    start_block = Block([0,block_y],SIZE[0],block_count)
     block_count += 1
     while block_y > 70:
         block_y -= random.randint(50,100)
-        block_x = (block_x + (random.randint(-325,325))) % (size[0] - block_width)
+        block_x = (block_x + (random.randint(-325,325))) % (SIZE[0] - block_width)
         new_block = Block([block_x,block_y], block_width,block_count)
         block_count += 1
         block_list.append(new_block)   
     game_over = False
     clock = pygame.time.Clock()
     horizontal_direction = 'none'
-    max_score = 0
+    current_score = 0
     max_index = 0
-    
+    max_score = 0
+    score_count = 0
 # -------------- Main Program Loop ---------------- #
-    while not game_over:
+    while not game_over and len(player_list) > 0:
+
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
                 pygame.quit()
-                return 'exit'
+                quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
                     return 'gameover'
+        current_score = 0
+        score_count += 1
+        if score_count > 700:
+            game_over = True
 
-            max_score = 0
-
-        for player in player_list:
+        for i,player in enumerate(player_list):
             if player.alive == True:
                 player.set_score(start_block)
+                genome.fitness += player.score/100000
                 player.set_next(block_list) 
-                player.think(size,block_width)
                 player.move()
                 player.collision(block_list,start_block)
+                if player.score > current_score:
+                    current_score = player.score
+                    max_index = i
                 if player.score > max_score:
                     max_score = player.score
-                    max_index = player_list.index(player)
+                    score_count = 0
+                nn_output = nn_list[i].activate((player.rect.centerx,player.rect.centery,player.current_pos[0],player.current_pos[1],player.next_pos[0],player.next_pos[1]))
+                map(sigmoid,nn_output)
+                position = nn_output.index(max(nn_output))
+                if position == 0:
+                    player.horizontal_direction = 'right'
+                elif position == 1:
+                    player.horizontal_direction = 'none'
+                elif position == 2:
+                    player.horizontal_direction = 'left'
 
-        if player_list[max_index].rect.y < size[0]//4 :            
+        if max_index >= len(player_list):
+            max_index = len(player_list) - 1
+        
+
+        if player_list[max_index].rect.y < SIZE[0]//4 :            
             if block_y > 0:
                 temp_y = random.randint(50,100)
                 block_y -= temp_y
-                block_x = (block_x + (random.randint(-340,340))) % (size[0] - block_width)
+                block_x = (block_x + (random.randint(-340,340))) % (SIZE[0] - block_width)
                 new_block = Block([block_x,block_y], block_width,block_count)
                 block_count += 1
                 block_list.append(new_block)
             block_y = move(4,block_y,block_list,player_list,start_block)
             
-        for i in range(len(block_list)):
-            if block_list[i].rect.y > size[1] + 50:
-                block_list[i].alive = False
+        for block in block_list:
+            if block.rect.y > SIZE[1] + 30:
+                block.alive = False
+                block_list.pop(block_list.index(block))
 
-        for i in range(len(player_list)):
-            if player_list[i].rect.bottom > size[1]:
-                player_list[i].alive = False
-        
-        if all(player.alive == False for player in player_list):
+        for player in player_list:
+            if player.rect.bottom > SIZE[1]:
+                player.alive = False
+                
+                genome_list[player_list.index(player)].fitness -= 3
+                nn_list.pop(player_list.index(player))
+                genome_list.pop(player_list.index(player))
+                player_list.pop(player_list.index(player))
+
+        if max_score > 120000:
+            f = open("best.pickle","wb")
+            pickle.dump(nn_list[0],f)
+            f.close()
             game_over = True
-            return 'gameover'
+        
+        #if all(player.alive == False for player in player_list):
+        #    game_over = True
+        #    return 'gameover'
 
         screen.blit(background_image_1,(0,0))     
         
@@ -222,18 +244,28 @@ def gameplay():
                 screen.blit(player.image,player.rect)
         
         score_display = score_font.render(str(max_score), True, BLACK)
-        screen.blit(score_display,(size[0]//20, size[1]//20))
+        screen.blit(score_display,(SIZE[0]//20, SIZE[1]//20))
 
         pygame.display.flip()
         clock.tick(60)
 
+def run(config_file):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
+    population = neat.Population(config)
+    population.add_reporter(neat.StdOutReporter(True))
+    statistics = neat.StatisticsReporter()
+    population.add_reporter(statistics)
+    winner = population.run(gameplay, 50)
+    print('\nBest genome:\n{!s}'.format(winner))
+
+
 if __name__ == '__main__':
     pygame.init()
-    size = (1280,720)
-    screen = pygame.display.set_mode(size)
+    SIZE = (1280,720)
+    screen = pygame.display.set_mode(SIZE)
+    pygame.display.set_caption("NEAT-Jump")
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
-    background_image_1 = pygame.transform.smoothscale(background_image_1, size)
-    while True:
-        if gameplay() != 'gameover':
-            break
+    background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
+    generation = 0
+    run(os.path.join(PATH,"config-feedforward.txt"))
 
