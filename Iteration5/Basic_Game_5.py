@@ -34,6 +34,7 @@ class Player(pygame.sprite.Sprite):
         self.block_hit_list = []
         self.fitness = 0
         self.block_count = 0
+        self.none_score = 0
 
     def update(self):
         self.image_num = (self.image_num + 1 ) % 14
@@ -94,7 +95,9 @@ class Player(pygame.sprite.Sprite):
         if self.block_count > 2:
             self.fitness -= 1
             self.block_count = 0
-            print(True)
+        if self.none_score > 500:
+            self.fitness -= 2
+            self.none_score = 0
         
     def set_next(self,block_group):
         for block in block_group:
@@ -206,7 +209,7 @@ def gameplay(genomes,config):
         player_list.append(Player())
         genome_list.append(genome)
 
-    block_width = 120
+    block_width = 150
     block_y = SIZE[1] - 20
     block_x = np.random.randint(80,SIZE[0] - 80)
     start_block = Block([0,block_y],SIZE[0],block_count)
@@ -215,11 +218,11 @@ def gameplay(genomes,config):
         temp_y = random.randint(130,140)
         block_y -= temp_y
         temp_x = block_x
-        block_x += np.random.randint(-1 * min(SIZE[0]//5,block_x - block_width//2),min(SIZE[0]- block_x - block_width,SIZE[0]//5))
+        block_x += np.random.randint(-1 * min(200,block_x - block_width//2),min(SIZE[0]- block_x - block_width,200))
         if abs(block_x - temp_x) < block_width:
             if block_x > SIZE[0]//2:
-                block_x -= block_width * 2
-            else: block_x += block_width * 2
+                block_x -= block_width
+            else: block_x += block_width 
         new_block = Block([block_x,block_y], block_width,block_count)
         block_count += 1
         block_list.append(new_block)   
@@ -263,37 +266,41 @@ def gameplay(genomes,config):
             position = nn_output.index(max(nn_output))
             if position == 0 and nn_output[0] > 0.5:
                 player.horizontal_direction = 'right'
+                player.none_score = 0
             elif position == 1 and nn_output[1] > 0.5:
                 player.horizontal_direction = 'left'
+                player.none_score = 0
             else:
-                player.horizontal_direction = 'none'
+                if player.horizontal_direction != 'none':
+                    player.none_score = 0
+                    player.horizontal_direction = 'none'
+                else:
+                    player.none_score += 1
         
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
 
-        print(player_list[max_index].fitness)
-
-        if player_list[max_index].rect.y < SIZE[0]//6 :            
+        if player_list[max_index].rect.y < SIZE[0]//5 :            
             if block_y > 0:
                 temp_y = random.randint(130,140)
                 block_y -= temp_y
                 temp_x = block_x
-                block_x += np.random.randint(-1 * min(SIZE[0]//5,block_x - block_width//2),min(SIZE[0]- block_x - block_width,SIZE[0]//5))
+                block_x += np.random.randint(-1 * min(200,block_x - block_width//2),min(SIZE[0]- block_x - block_width,200))
                 if abs(block_x - temp_x) < block_width:
                     if block_x > SIZE[0]//2:
-                        block_x -= block_width * 2
-                    else: block_x += block_width * 2
+                        block_x -= block_width
+                    else: block_x += block_width
                 new_block = Block([block_x,block_y], block_width,block_count)
                 block_count += 1
                 block_list.append(new_block)
-            block_y = move(2,block_y,block_list,player_list,start_block)
+            block_y = move(4,block_y,block_list,player_list,start_block)
             
         for block in block_list:
             if block.rect.y > SIZE[1] + 30:
                 block_list.pop(block_list.index(block))
 
         for player in player_list:
-            if player.rect.top > SIZE[1] or player.score_count > 300:
+            if player.rect.top > SIZE[1] or player.score_count > 500:
                 genome_list[player_list.index(player)].fitness = player.fitness
                 nn_list.pop(player_list.index(player))
                 genome_list.pop(player_list.index(player))
