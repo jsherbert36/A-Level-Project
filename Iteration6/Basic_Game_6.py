@@ -285,7 +285,7 @@ def gameplay(genomes,config):
                 temp_y = random.randint(130,140)
                 block_y -= temp_y
                 temp_x = block_x
-                block_x += np.random.randint(-1 * min(190,block_x - block_width//2),min(SIZE[0]- block_x - block_width,190))
+                block_x += np.random.randint(-1 * min(200,block_x - block_width//2),min(SIZE[0]- block_x - block_width,200))
                 if abs(block_x - temp_x) < block_width:
                     if block_x > SIZE[0]//2:
                         block_x -= block_width
@@ -300,7 +300,7 @@ def gameplay(genomes,config):
                 block_list.pop(block_list.index(block))
 
         for player in player_list:
-            if player.rect.top > SIZE[1] or player.score_count > 300:
+            if player.rect.top > SIZE[1] or player.score_count > 500:
                 genome_list[player_list.index(player)].fitness = player.fitness
                 nn_list.pop(player_list.index(player))
                 genome_list.pop(player_list.index(player))
