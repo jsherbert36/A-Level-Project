@@ -29,9 +29,11 @@ class Player(pygame.sprite.Sprite):
         self.current_block = 0
         self.current_pos = [SIZE[0]//2,SIZE[1] - 20]
         self.horizontal_direction = 'none'
-        self.alive = True
         self.score_count = 0
         self.final_distance = []
+        self.block_hit_list = []
+        self.fitness = 0
+        self.block_count = 0
 
     def update(self):
         self.image_num = (self.image_num + 1 ) % 14
@@ -68,9 +70,16 @@ class Player(pygame.sprite.Sprite):
         block_hit_list = pygame.sprite.spritecollide(self,block_group,False)
         for block in block_hit_list:
             if self.rect.bottom > block.rect.top and self.direction == 'down':
-                self.current_block = block.number
+                if self.current_block == block.number:
+                    self.block_count += 1
+                else:
+                    self.current_block = block.number
+                    self.block_count = 0
                 self.current_pos = block.rect.midtop
                 self.reverse()
+            if block.number not in self.block_hit_list:
+                self.block_hit_list.append(block.number)
+                self.fitness += 3
         if self.rect.colliderect(start_block):
             if self.rect.bottom > start_block.rect.top and self.direction == 'down':
                 self.current_block = start_block.number
@@ -82,6 +91,10 @@ class Player(pygame.sprite.Sprite):
         if self.height > self.score:
             self.score = self.height
             self.score_count = 0
+        if self.block_count > 2:
+            self.fitness -= 1
+            self.block_count = 0
+            print(True)
         
     def set_next(self,block_group):
         for block in block_group:
@@ -161,16 +174,12 @@ class Block(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
-        self.alive = True
-
 
 def move(direction,block_y,block_list,player_list,start_block):
     for block in block_list:
-        if block.alive == True:
-            block.rect.y += direction
+        block.rect.y += direction
     for player in player_list:
-        if block.alive == True:
-            player.rect.y += direction
+        player.rect.y += direction
     start_block.rect.y += direction
     block_y += direction
     return block_y
@@ -216,7 +225,6 @@ def gameplay(genomes,config):
         block_list.append(new_block)   
     game_over = False
     clock = pygame.time.Clock()
-    horizontal_direction = 'none'
     current_score = 0
     max_index = 0
     max_score = 0
@@ -238,33 +246,32 @@ def gameplay(genomes,config):
         
         current_score = 0
         for i,player in enumerate(player_list):
-            if player.alive == True:
-                player.score_count += 1
-                player.set_score(start_block)
-                genome.fitness += player.score/100000
-                player.set_next(block_list) 
-                player.move()
-                player.collision(block_list,start_block)
-                if player.score > current_score:
-                    current_score = player.score
-                    max_index = i
-                if player.score > max_score:
-                    max_score = player.score
-                distance1 = player.check_directions(SIZE,block_list)
-                distance2 = player.check_quadrants(SIZE,block_list)
-                print(distance1+distance2)
-                nn_output = nn_list[i].activate(distance1 + distance2)
-                position = nn_output.index(max(nn_output))
-                if position == 0 and nn_output[0] > 0.5:
-                    player.horizontal_direction = 'right'
-                elif position == 1 and nn_output[1] > 0.5:
-                    player.horizontal_direction = 'left'
-                else:
-                    player.horizontal_direction = 'none'
+            player.score_count += 1
+            player.set_score(start_block)
+            genome_list[i].fitness = player.fitness
+            player.set_next(block_list) 
+            player.move()
+            player.collision(block_list,start_block)
+            if player.score > current_score:
+                current_score = player.score
+                max_index = i
+            if player.score > max_score:
+                max_score = player.score
+            distance1 = player.check_directions(SIZE,block_list)
+            distance2 = player.check_quadrants(SIZE,block_list)
+            nn_output = nn_list[i].activate(distance1 + distance2)
+            position = nn_output.index(max(nn_output))
+            if position == 0 and nn_output[0] > 0.5:
+                player.horizontal_direction = 'right'
+            elif position == 1 and nn_output[1] > 0.5:
+                player.horizontal_direction = 'left'
+            else:
+                player.horizontal_direction = 'none'
         
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
-        #print(player_list[max_index].final_distance)
+
+        print(player_list[max_index].fitness)
 
         if player_list[max_index].rect.y < SIZE[0]//6 :            
             if block_y > 0:
@@ -283,13 +290,11 @@ def gameplay(genomes,config):
             
         for block in block_list:
             if block.rect.y > SIZE[1] + 30:
-                block.alive = False
                 block_list.pop(block_list.index(block))
 
         for player in player_list:
             if player.rect.top > SIZE[1] or player.score_count > 300:
-                player.alive = False
-                genome_list[player_list.index(player)].fitness -= 3
+                genome_list[player_list.index(player)].fitness = player.fitness
                 nn_list.pop(player_list.index(player))
                 genome_list.pop(player_list.index(player))
                 player_list.pop(player_list.index(player))
@@ -299,17 +304,14 @@ def gameplay(genomes,config):
             pickle.dump(nn_list[0],f)
             f.close()
             game_over = True
- 
 
         screen.blit(background_image_1,(0,0))     
         for block in block_list:
-            if block.alive == True:
-                block.update
-                screen.blit(block.image,block.rect)
+            block.update
+            screen.blit(block.image,block.rect)
         for player in player_list:
-            if player.alive == True:
-                player.update()
-                screen.blit(player.image,player.rect)
+            player.update()
+            screen.blit(player.image,player.rect)
         score_display = score_font.render("Max Score " + str(max_score), True, BLACK)
         screen.blit(score_display,(SIZE[0]//20, SIZE[1]//20))
         generation_display = score_font.render("Generation " + str(generation), True, BLACK)
