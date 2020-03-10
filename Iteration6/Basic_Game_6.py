@@ -21,9 +21,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = SIZE[0]//2
         self.rect.y = SIZE[1] - self.width
         self.direction = 'up'
-        self.normal_speed = 20
+        self.normal_speed = 22
         self.speed = self.normal_speed
-        self.terminal_velocity = 22
+        self.terminal_velocity = 24
         self.height = 0
         self.score = 0
         self.current_block = 0
@@ -67,7 +67,7 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'up'
             self.speed = self.normal_speed
 
-    def collision(self,block_group,start_block):
+    def collision(self,block_group):
         block_hit_list = pygame.sprite.spritecollide(self,block_group,False)
         for block in block_hit_list:
             if self.rect.bottom > block.rect.top and self.direction == 'down':
@@ -81,11 +81,6 @@ class Player(pygame.sprite.Sprite):
             if block.number not in self.block_hit_list:
                 self.block_hit_list.append(block.number)
                 self.fitness += 3
-        if self.rect.colliderect(start_block):
-            if self.rect.bottom > start_block.rect.top and self.direction == 'down':
-                self.current_block = start_block.number
-                self.current_pos = start_block.rect.midtop
-                self.reverse()
 
     def set_score(self,start_block):
         self.height = start_block.rect.top - self.rect.bottom 
@@ -98,13 +93,6 @@ class Player(pygame.sprite.Sprite):
         if self.none_score > 500:
             self.fitness -= 2
             self.none_score = 0
-        
-    def set_next(self,block_group):
-        for block in block_group:
-            if block.number == self.current_block + 1:
-                self.next1_pos = block.rect.midtop
-            elif block.number == self.current_block + 2:
-                self.next2_pos = block.rect.midtop
 
     def move(self):
         if self.horizontal_direction == 'right':
@@ -151,8 +139,8 @@ class Player(pygame.sprite.Sprite):
 
     def check_quadrants(self,SIZE,block_list):
         self.final_distance2 = [0,0,0,0]
+        distance = [[math.inf],[math.inf],[math.inf],[math.inf]]
         for block in block_list:
-            distance = [[math.inf],[math.inf],[math.inf],[math.inf]]
             if block.rect.centerx > self.rect.centerx and block.rect.y < self.rect.y:
                 distance[0].append(math.sqrt(((block.rect.centerx - self.rect.centerx)**2)+((self.rect.y - block.rect.y)**2)))
             elif block.rect.centerx < self.rect.centerx and block.rect.y > self.rect.y:
@@ -161,7 +149,7 @@ class Player(pygame.sprite.Sprite):
                 distance[2].append(math.sqrt(((self.rect.centerx - block.rect.centerx)**2)+((self.rect.y - block.rect.y)**2)))
             elif block.rect.centerx > self.rect.centerx and block.rect.y > self.rect.y:
                 distance[3].append(math.sqrt(((block.rect.centerx - self.rect.centerx)**2)+((block.rect.y - self.rect.y)**2)))
-        for i in range(len(distance)):
+        for i in range(4):
             if len(distance[i]) > 1:
                 self.final_distance2[i] = min(distance[i])
         return self.final_distance2
@@ -187,8 +175,13 @@ def move(direction,block_y,block_list,player_list,start_block):
     block_y += direction
     return block_y
     
-def sigmoid(X):
-   return 1/(1+np.exp(-X))
+def set_block(block_x,block_y,block_width,tolerance):
+    block_y -= random.randint(130,140)
+    temp_x = block_x
+    far_left = block_x - block_width//2
+    far_right = SIZE[0]- block_x - block_width
+    block_x += np.random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
+    return block_x,block_y
     
 def gameplay(genomes,config):
     global generation
@@ -201,6 +194,7 @@ def gameplay(genomes,config):
     nn_list = []
     block_list = []
     block_count = 0
+    tolerance = 220
 
     for genome_id,genome in genomes:
         genome.fitness = 0
@@ -209,20 +203,15 @@ def gameplay(genomes,config):
         player_list.append(Player())
         genome_list.append(genome)
 
-    block_width = 150
-    block_y = SIZE[1] - 20
-    block_x = np.random.randint(80,SIZE[0] - 80)
-    start_block = Block([0,block_y],SIZE[0],block_count)
+    block_width = 130
+    start_block = Block([0,SIZE[1]-20],SIZE[0],block_count)
     block_count += 1
+    block_x,block_y = SIZE[0]//2,SIZE[1] - 50
+    new_block = Block([block_x,block_y], block_width,block_count)
+    block_count += 1
+    block_list.append(new_block)
     while block_y > 70:
-        temp_y = random.randint(130,140)
-        block_y -= temp_y
-        temp_x = block_x
-        block_x += np.random.randint(-1 * min(200,block_x - block_width//2),min(SIZE[0]- block_x - block_width,200))
-        if abs(block_x - temp_x) < block_width:
-            if block_x > SIZE[0]//2:
-                block_x -= block_width
-            else: block_x += block_width 
+        block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
         new_block = Block([block_x,block_y], block_width,block_count)
         block_count += 1
         block_list.append(new_block)   
@@ -243,7 +232,6 @@ def gameplay(genomes,config):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
-                    return 'gameover'
                 elif event.key == pygame.K_q:
                     slow = not slow
         
@@ -251,10 +239,9 @@ def gameplay(genomes,config):
         for i,player in enumerate(player_list):
             player.score_count += 1
             player.set_score(start_block)
-            genome_list[i].fitness = player.fitness
-            player.set_next(block_list) 
+            genome_list[i].fitness = player.fitness 
             player.move()
-            player.collision(block_list,start_block)
+            player.collision(block_list)
             if player.score > current_score:
                 current_score = player.score
                 max_index = i
@@ -281,18 +268,17 @@ def gameplay(genomes,config):
             max_index = len(player_list) - 1
 
         if player_list[max_index].rect.y < SIZE[0]//5 :            
-            if block_y > 0:
-                temp_y = random.randint(130,140)
-                block_y -= temp_y
-                temp_x = block_x
-                block_x += np.random.randint(-1 * min(200,block_x - block_width//2),min(SIZE[0]- block_x - block_width,200))
-                if abs(block_x - temp_x) < block_width:
-                    if block_x > SIZE[0]//2:
-                        block_x -= block_width
-                    else: block_x += block_width
+            if block_y > -10:
+                block_x,block_y = set_block(block_x,block_y,block_width,tolerance)
                 new_block = Block([block_x,block_y], block_width,block_count)
                 block_count += 1
                 block_list.append(new_block)
+
+        if player_list[max_index].rect.y < 0:
+            block_y = move(11,block_y,block_list,player_list,start_block)
+        elif player_list[max_index].rect.y < SIZE[1]//6 and player_list[max_index].rect.y > 0:
+            block_y = move(7,block_y,block_list,player_list,start_block)
+        elif player_list[max_index].rect.y < SIZE[1]//3 and player_list[max_index].rect.y > SIZE[1]//6:
             block_y = move(4,block_y,block_list,player_list,start_block)
             
         for block in block_list:
@@ -300,17 +286,11 @@ def gameplay(genomes,config):
                 block_list.pop(block_list.index(block))
 
         for player in player_list:
-            if player.rect.top > SIZE[1] or player.score_count > 500:
+            if player.rect.top > SIZE[0] or player.score_count > 500:
                 genome_list[player_list.index(player)].fitness = player.fitness
                 nn_list.pop(player_list.index(player))
                 genome_list.pop(player_list.index(player))
                 player_list.pop(player_list.index(player))
-
-        if max_score > 120000:
-            f = open("best.pickle","wb")
-            pickle.dump(nn_list[0],f)
-            f.close()
-            game_over = True
 
         screen.blit(background_image_1,(0,0))     
         for block in block_list:
@@ -319,6 +299,7 @@ def gameplay(genomes,config):
         for player in player_list:
             player.update()
             screen.blit(player.image,player.rect)
+
         score_display = score_font.render("Max Score " + str(max_score), True, BLACK)
         screen.blit(score_display,(SIZE[0]//20, SIZE[1]//20))
         generation_display = score_font.render("Generation " + str(generation), True, BLACK)
