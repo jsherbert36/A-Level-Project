@@ -18,7 +18,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.image_list[0]
         self.image_num = 0
         self.rect = self.image.get_rect()
-        self.rect.x = SIZE[0]//2
+        self.rect.x = 25
         self.rect.y = SIZE[1] - self.width
         self.direction = 'up'
         self.normal_speed = 22
@@ -46,9 +46,9 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += self.speed
         self.change_speed()
         if self.rect.right > SIZE[0]:
-            self.rect.right = SIZE[0]
+            self.rect.right = 0
         elif self.rect.x < 0:
-            self.rect.x = 0
+            self.rect.x = SIZE[0]
         if self.speed > self.terminal_velocity:
             self.speed = self.terminal_velocity
 
@@ -177,9 +177,9 @@ def move(direction,block_y,block_list,player_list,start_block):
     
 def set_block(block_x,block_y,block_width,tolerance):
     block_y -= random.randint(130,140)
-    far_left = block_x - block_width//2
-    far_right = SIZE[0]- block_x - block_width
-    block_x += np.random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
+    block_x = (block_x + np.random.randint(-1 * tolerance,tolerance)) % SIZE[0]
+    if block_x > SIZE[0] - block_width:
+        block_x -= block_width
     return block_x,block_y
     
 def gameplay(genomes,config):
@@ -205,7 +205,7 @@ def gameplay(genomes,config):
     block_width = 130
     start_block = Block([0,SIZE[1]-20],SIZE[0],block_count)
     block_count += 1
-    block_x,block_y = SIZE[0]//2,SIZE[1] - 50
+    block_x,block_y = 25,SIZE[1] - 50
     new_block = Block([block_x,block_y], block_width,block_count)
     block_count += 1
     block_list.append(new_block)
