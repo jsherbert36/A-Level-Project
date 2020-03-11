@@ -267,7 +267,7 @@ def gameplay(genomes,config):
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
 
-        if player_list[max_index].rect.y < SIZE[0]//5 :            
+        if player_list[max_index].rect.y < SIZE[1]//4 :            
             if block_y > -10:
                 block_x,block_y = set_block(block_x,block_y,block_width,tolerance)
                 new_block = Block([block_x,block_y], block_width,block_count)
