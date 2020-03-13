@@ -27,45 +27,12 @@ def Menu1(window,surface):
     SIZE = window
     screen = surface
     choice = False
-    
-    global game_over
-    game_over = False
+    button_list = []
+
     while not game_over and not choice:
-        screen.fill(BLACK) 
-        Pong = font.render('NEAT JUMP', True, WHITE)
-        PongRect = Pong.get_rect()
-        PongRect.center = (CenterX, SIZE[1] // 3) 
-        screen.blit(Pong, PongRect) 
+        screen.fill(BLACK)  
         mouse = pygame.mouse.get_pos()      
-        Single = font2.render('SINGLEPLAYER', True, SingleColour)
-        SingleRect = Single.get_rect()
-        SingleRect.center = (CenterX, SIZE[1] // 2) 
-        screen.blit(Single, SingleRect) 
-        if SingleRect.collidepoint(mouse):    
-            SingleColour = RED
-        else:
-            SingleColour = WHITE  
-        Multi = font2.render('MULTIPLAYER', True, MultiColour)
-        MultiRect = Multi.get_rect()
-        MultiRect.center = (CenterX, int(SIZE[1] // 1.7)) 
-        screen.blit(Multi, MultiRect) 
-        if MultiRect.collidepoint(mouse):
-            MultiColour = RED
-        else:
-            MultiColour = WHITE
-        Score = font2.render('SCOREBOARD', True, ScoreColour)
-        ScoreRect = Score.get_rect()
-        ScoreRect.center = (CenterX, int(SIZE[1] // 1.46)) 
-        screen.blit(Score, ScoreRect) 
-        if ScoreRect.collidepoint(mouse):
-            ScoreColour = RED
-        else:
-            ScoreColour = WHITE
         
-        Message = font3.render('PRESS ESC TO EXIT', True, WHITE)
-        MessageRect = Message.get_rect()
-        MessageRect.center = (CenterX, int(SIZE[1]//1.2)) 
-        screen.blit(Message, MessageRect) 
         pygame.display.flip()
 
         for event in pygame.event.get():
