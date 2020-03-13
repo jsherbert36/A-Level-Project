@@ -35,10 +35,10 @@ class Player(pygame.sprite.Sprite):
         elif self.direction == 'down':
             self.rect.y += self.speed
         self.change_speed()
-        if self.rect.x > SIZE[0] - self.width + 10:
-            self.rect.x = 1
+        if self.rect.right > SIZE[0]:
+            self.rect.right = SIZE[0]
         elif self.rect.x < 0:
-            self.rect.x = SIZE[0] - self.width
+            self.rect.x = 0
         if self.speed > self.terminal_velocity:
             self.speed = self.terminal_velocity
 
@@ -149,9 +149,9 @@ def move(direction,block_y,sprite_group):
 
 def set_block(block_x,block_y,block_width,tolerance):
     block_y -= random.randint(130,140)
-    block_x = (block_x + np.random.randint(-1 * tolerance,tolerance)) % SIZE[0]
-    if block_x > SIZE[0] - block_width:
-        block_x -= block_width
+    far_left = block_x - block_width//2
+    far_right = SIZE[0]- block_x - block_width
+    block_x += np.random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
     return block_x,block_y
 
 def choose_block_type(height):
@@ -162,7 +162,10 @@ def choose_block_type(height):
     else:
         return 'still'
 
-def gameplay():
+def gameplay(window,surface):
+    global SIZE,screen
+    SIZE = window
+    screen = surface
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     all_sprites_group = pygame.sprite.Group()
@@ -198,10 +201,10 @@ def gameplay():
         count += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_over = True
+                return 'exit', -1
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    game_over = True
+                    return 'exit', -1
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
@@ -260,7 +263,7 @@ def gameplay():
             if player.rect.top > SIZE[1]:
                 game_over = True
                 print(player1.score)
-                return 'gameover'
+                return 'gameover',player1.score
         
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
@@ -278,6 +281,6 @@ if __name__ == "__main__":
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
-    if gameplay() == 'gameover':
+    if gameplay(SIZE,screen) == 'gameover':
         GameOver.gameover()
     pygame.quit()
