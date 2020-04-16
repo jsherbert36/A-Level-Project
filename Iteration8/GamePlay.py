@@ -201,10 +201,10 @@ def gameplay(window,surface):
         count += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return 'exit', -1
+                return 'gameover', 0
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return 'exit', -1
+                    return 'gameover', 0
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
@@ -263,7 +263,7 @@ def gameplay(window,surface):
             if player.rect.top > SIZE[1]:
                 game_over = True
                 print(player1.score)
-                return 'gameover',player1.score
+                return 'lost',player1.score
         
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()
@@ -282,5 +282,5 @@ if __name__ == "__main__":
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
     if gameplay(SIZE,screen) == 'gameover':
-        GameOver.gameover()
+        pass
     pygame.quit()

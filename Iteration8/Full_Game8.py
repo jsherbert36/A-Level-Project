@@ -13,7 +13,7 @@ if __name__ == "__main__":
     choice = Menu.Menu1(SIZE,screen)
     if choice != 'gameover':
         if choice == 'single':
-            GamePlay.gameplay(SIZE,screen)
+            result = GamePlay.gameplay(SIZE,screen)
         elif choice == 'double':
             pass
     pygame.quit()
