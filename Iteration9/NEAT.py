@@ -190,6 +190,8 @@ def gameplay(genomes,config):
     global generation
     global high_score
     global slow
+    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
+    background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     generation += 1
     score_font = pygame.font.Font("freesansbold.ttf", 30) 
     player_list = []
@@ -231,10 +233,11 @@ def gameplay(genomes,config):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
-                pygame.quit()
+                return 'gameover'
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
+                    return 'gameover'
                 elif event.key == pygame.K_q:
                     slow = not slow
         
@@ -323,7 +326,10 @@ def gameplay(genomes,config):
         high_score = max_score
     max_score_list.append(max_score)
 
-def run(config_file):
+def run(config_file,window,surface):
+    global SIZE,screen
+    SIZE = window
+    screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
@@ -333,14 +339,11 @@ def run(config_file):
     f = open('test',"wt")        
     json.dump(List, f)
     f.close()
-    print('\nBest genome:\n{!s}'.format(winner))
 
 if __name__ == '__main__':
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption("NEAT-Jump")
-    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
-    background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     run(os.path.join(PATH,"config2.txt"))
 

@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,Menu,GameOver,GamePlay
+import math,pygame,random,sys,os,Menu,GameOver,GamePlay,NEAT
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -10,8 +10,10 @@ if __name__ == "__main__":
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
-    choice = Menu.Menu1(SIZE,screen)
-    if choice != 'gameover':
+    pygame.display.set_caption("NEAT-JUMP")
+    choice = None
+    while choice != 'gameover':
+        choice = Menu.Menu1(SIZE,screen)
         if choice == 'single':
             result = GamePlay.gameplay(SIZE,screen,'single')
         elif choice == 'double':
@@ -19,5 +21,5 @@ if __name__ == "__main__":
         elif choice == 'computer':
             pass
         elif choice == 'learn':
-            pass
+            result = NEAT.run(os.path.join(PATH,"config2.txt"),SIZE,screen)
     pygame.quit()
