@@ -58,6 +58,7 @@ def Menu1(window,surface):
                         return 'gameover'
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     for button in button_list:
+                        
                         if button.rect.collidepoint(mouse):
                             return button.action
 
