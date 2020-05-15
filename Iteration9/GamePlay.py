@@ -4,7 +4,6 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 PATH = sys.path[0]
-import numpy as np
 
 class Player(pygame.sprite.Sprite):
     def __init__(self,x_pos):
@@ -151,7 +150,7 @@ def set_block(block_x,block_y,block_width,tolerance):
     block_y -= random.randint(130,140)
     far_left = block_x - block_width//2
     far_right = SIZE[0]- block_x - block_width
-    block_x += np.random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
+    block_x += random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
     return block_x,block_y
 
 def choose_block_type(height):

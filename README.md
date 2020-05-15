@@ -3,9 +3,6 @@ This is my Year 12 Machine Learning A Level Project. I have designed a game simi
 
 # Dependencies
 - [Python 3.5.7 or later](https://www.python.org/ "Download Python")
-- [NumPy](https://numpy.org/ "NumPy Homepage")
-
-``pip install numpy``
 
 - [NEAT-Python](https://neat-python.readthedocs.io/en/latest/installation.html "Install NEAT-Python")
 

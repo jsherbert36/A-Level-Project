@@ -1,5 +1,4 @@
 import math,pygame,random,sys,os,time,neat,pickle
-import numpy as np
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -183,7 +182,7 @@ def set_block(block_x,block_y,block_width,tolerance):
     block_y -= random.randint(130,140)
     far_left = block_x - block_width//2
     far_right = SIZE[0]- block_x - block_width
-    block_x += np.random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
+    block_x += random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
     return block_x,block_y
     
 def gameplay(genomes,config):
@@ -332,12 +331,9 @@ def run(config_file,window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    population.add_reporter(neat.StdOutReporter(True))
-    statistics = neat.StatisticsReporter()
-    population.add_reporter(statistics)
     winner = population.run(gameplay, 1000)    
     f = open('test',"wt")        
-    json.dump(List, f)
+    json.dump(winner, f)
     f.close()
 
 if __name__ == '__main__':
