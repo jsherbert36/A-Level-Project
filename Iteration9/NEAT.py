@@ -331,8 +331,10 @@ def run(config_file,window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    winner = population.run(gameplay, 1000)    
-    
+    winner = population.run(gameplay, 120)    
+    test_database = shelve.open("test_database.db")
+    test_database["test"] = winner
+    test_database.close()
 
 
 if __name__ == '__main__':

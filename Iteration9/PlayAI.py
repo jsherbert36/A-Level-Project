@@ -10,6 +10,76 @@ slow = False
 max_score_list = []
 
 class Player(pygame.sprite.Sprite):
+    def __init__(self,x_pos):
+        super().__init__()
+        self.width = 40
+        self.image_list = []
+        for i in range(1,9):
+            temp_image = pygame.image.load(os.path.join(PATH,"images",("frame-"+str(i)+ ".png"))).convert()
+            temp_image.set_colorkey(BLACK)
+            self.image_list.append(pygame.transform.smoothscale(temp_image, [self.width, self.width]))
+        self.image = self.image_list[0]
+        self.image_num = 0
+        self.rect = self.image.get_rect()
+        self.rect.x = x_pos
+        self.rect.y = SIZE[1] - self.width
+        self.direction = 'up'
+        self.normal_speed = 22
+        self.speed = self.normal_speed
+        self.terminal_velocity = 24
+        self.score = 0
+
+    def update(self):
+        self.image_num = (self.image_num + 1 ) % 14
+        if self.image_num % 4 == 0:
+            self.image = self.image_list[self.image_num//2]
+        if self.direction == 'up':
+            self.rect.y -= self.speed
+        elif self.direction == 'down':
+            self.rect.y += self.speed
+        self.change_speed()
+        if self.rect.right > SIZE[0]:
+            self.rect.right = SIZE[0]
+        elif self.rect.x < 0:
+            self.rect.x = 0
+        if self.speed > self.terminal_velocity:
+            self.speed = self.terminal_velocity
+
+    def change_speed(self):
+        if self.speed == 0:
+            self.reverse()
+        if self.direction == 'up':       
+            self.speed -= 1
+        elif self.direction == 'down':
+            self.speed += 1
+
+    def reverse(self):
+        if self.direction == 'up':
+            self.direction = 'down'
+        elif self.direction == 'down':
+            self.direction = 'up'
+            self.speed = self.normal_speed
+
+    def set_score(self,start_block):
+        self.height = start_block.rect.top - self.rect.bottom 
+        if self.height > self.score:
+            self.score = self.height
+
+    def move(self,direction):
+        if direction == 'right':
+            self.rect.x += 9
+        elif direction == 'left':
+            self.rect.x -= 9
+
+    def collision(self,block_group):
+        block_hit_list = pygame.sprite.spritecollide(self,block_group,False)
+        for block in block_hit_list:
+            if self.rect.bottom > block.rect.top and self.direction == 'down':
+                self.reverse()
+                if block.type == 'onetime':
+                    block.hit += 1
+
+class ComputerPlayer(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.width = 40
@@ -185,7 +255,10 @@ def set_block(block_x,block_y,block_width,tolerance):
     block_x += random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
     return block_x,block_y
     
-def gameplay(genomes,config):
+def gameplay(config,window,surface):
+    global SIZE,screen
+    SIZE = window
+    screen = surface
     global generation
     global high_score
     global slow
@@ -194,19 +267,15 @@ def gameplay(genomes,config):
     generation += 1
     score_font = pygame.font.Font("freesansbold.ttf", 30) 
     player_list = []
-    genome_list = []
-    nn_list = []
     block_list = []
     block_count = 0
     tolerance = 220
-
-    for genome_id,genome in genomes:
-        genome.fitness = 0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        nn_list.append(net)
-        player_list.append(Player())
-        genome_list.append(genome)
-
+    player_database = shelve.open("test_database.db") 
+    player1_genome = player_database["test"] 
+    player1_genome.fitness = 0
+    player_net = neat.nn.FeedForwardNetwork.create(player1_genome,config)
+    player1 = ComputerPlayer()
+    player_list.append(ComputerPlayer)
     block_width = 130
     start_block = Block([0,SIZE[1]-20],SIZE[0],block_count)
     block_count += 1
@@ -244,7 +313,6 @@ def gameplay(genomes,config):
         for i,player in enumerate(player_list):
             player.score_count += 1
             player.set_score(start_block)
-            genome_list[i].fitness = player.fitness 
             player.move()
             player.collision(block_list)
             if player.score > current_score:
@@ -252,23 +320,24 @@ def gameplay(genomes,config):
                 max_index = i
             if player.score > max_score:
                 max_score = player.score
-            distance1 = player.check_directions(SIZE,block_list)
-            distance2 = player.check_quadrants(SIZE,block_list)
-            nn_output = nn_list[i].activate(distance1 + distance2)
-            position = nn_output.index(max(nn_output))
-            if position == 0 and nn_output[0] > 0.5:
-                player.horizontal_direction = 'right'
-                player.none_score = 0
-            elif position == 1 and nn_output[1] > 0.5:
-                player.horizontal_direction = 'left'
-                player.none_score = 0
+        distance1 = player1.check_directions(SIZE,block_list)
+        distance2 = player1.check_quadrants(SIZE,block_list)
+        nn_output = player1_net.activate(distance1 + distance2)
+        position = nn_output.index(max(nn_output))
+        if position == 0 and nn_output[0] > 0.5:
+            player1.horizontal_direction = 'right'
+            player1.none_score = 0
+        elif position == 1 and nn_output[1] > 0.5:
+            player1.horizontal_direction = 'left'
+            player1.none_score = 0
+        else:
+            if player1.horizontal_direction != 'none':
+                player1.none_score = 0
+                player1.horizontal_direction = 'none'
             else:
-                if player.horizontal_direction != 'none':
-                    player.none_score = 0
-                    player.horizontal_direction = 'none'
-                else:
-                    player.none_score += 1
-        
+                player1.none_score += 1
+        player1_genome.fitness = player1.fitness
+
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
 
@@ -298,9 +367,6 @@ def gameplay(genomes,config):
 
         for player in player_list:
             if player.rect.top > SIZE[0] or player.score_count > 500:
-                genome_list[player_list.index(player)].fitness = player.fitness
-                nn_list.pop(player_list.index(player))
-                genome_list.pop(player_list.index(player))
                 player_list.pop(player_list.index(player))
 
         screen.blit(background_image_1,(0,0))     
@@ -325,21 +391,10 @@ def gameplay(genomes,config):
         high_score = max_score
     max_score_list.append(max_score)
 
-def run(config_file,window,surface):
-    global SIZE,screen
-    SIZE = window
-    screen = surface
-    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
-    population = neat.Population(config)
-    winner = population.run(gameplay, 1000)    
-    f = open('test',"wt")        
-    json.dump(winner, f)
-    f.close()
-
 if __name__ == '__main__':
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption("NEAT-Jump")
-    run(os.path.join(PATH,"config2.txt"))
+    gameplay(os.path.join(PATH,"config2.txt"),SIZE,screen)
 
