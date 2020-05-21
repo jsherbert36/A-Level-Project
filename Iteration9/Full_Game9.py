@@ -6,6 +6,7 @@ RED = (255, 0, 0)
 PATH = sys.path[0]
 
 if __name__ == "__main__":
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)

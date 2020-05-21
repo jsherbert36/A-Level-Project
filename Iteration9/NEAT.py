@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,neat,pickle,shelve
+import math,pygame,random,sys,os,neat,pickle,shelve,json
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -6,6 +6,7 @@ RED = (255, 0, 0)
 PATH = sys.path[0]
 generation = 0
 high_score = 0
+high_net = None
 slow = False
 max_score_list = []
 
@@ -187,6 +188,7 @@ def set_block(block_x,block_y,block_width,tolerance):
     
 def gameplay(genomes,config):
     global generation
+    global high_net
     global high_score
     global slow
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
@@ -250,6 +252,7 @@ def gameplay(genomes,config):
             if player.score > current_score:
                 current_score = player.score
                 max_index = i
+                max_net = nn_list[i]
             if player.score > max_score:
                 max_score = player.score
             distance1 = player.check_directions(SIZE,block_list)
@@ -323,6 +326,7 @@ def gameplay(genomes,config):
             clock.tick(60)
     if max_score > high_score:
         high_score = max_score
+        high_net = max_net
     max_score_list.append(max_score)
 
 def run(config_file,window,surface):
@@ -331,16 +335,21 @@ def run(config_file,window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    winner = population.run(gameplay, 120)    
-    test_database = shelve.open("test_database.db")
-    test_database["test"] = winner
-    test_database.close()
+    winner = population.run(gameplay, 200)
+    if __name__ == "__main__":
+        test_database = shelve.open("test_database")
+        test_database["test"] = high_net
+        test_database.close()
+        f = open("score_list.json","wt")        
+        json.dump(max_score_list, f)
+        f.close()
 
 
 if __name__ == '__main__':
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption("NEAT-Jump")
-    run(os.path.join(PATH,"config2.txt"))
+    run(os.path.join(PATH,"config1.txt"),SIZE,screen)
 

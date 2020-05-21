@@ -6,7 +6,6 @@ RED = (255, 0, 0)
 PATH = sys.path[0]
 generation = 0
 high_score = 0
-slow = False
 max_score_list = []
 
 class Player(pygame.sprite.Sprite):
@@ -261,7 +260,6 @@ def gameplay(config,window,surface):
     screen = surface
     global generation
     global high_score
-    global slow
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     generation += 1
@@ -270,12 +268,10 @@ def gameplay(config,window,surface):
     block_list = []
     block_count = 0
     tolerance = 220
-    player_database = shelve.open("test_database.db") 
-    player1_genome = player_database["test"] 
-    player1_genome.fitness = 0
-    player_net = neat.nn.FeedForwardNetwork.create(player1_genome,config)
+    player_database = shelve.open("test_database") 
+    player1_net = player_database["test"] 
     player1 = ComputerPlayer()
-    player_list.append(ComputerPlayer)
+    player_list.append(player1)
     block_width = 130
     start_block = Block([0,SIZE[1]-20],SIZE[0],block_count)
     block_count += 1
@@ -306,8 +302,6 @@ def gameplay(config,window,surface):
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
                     return 'gameover'
-                elif event.key == pygame.K_q:
-                    slow = not slow
         
         current_score = 0
         for i,player in enumerate(player_list):
@@ -336,7 +330,6 @@ def gameplay(config,window,surface):
                 player1.horizontal_direction = 'none'
             else:
                 player1.none_score += 1
-        player1_genome.fitness = player1.fitness
 
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
@@ -385,11 +378,7 @@ def gameplay(config,window,surface):
         screen.blit(high_score_display,(SIZE[0]//20, SIZE[1]//7))
 
         pygame.display.flip()
-        if slow == True:
-            clock.tick(60)
-    if max_score > high_score:
-        high_score = max_score
-    max_score_list.append(max_score)
+        clock.tick(60)
 
 if __name__ == '__main__':
     pygame.init()
