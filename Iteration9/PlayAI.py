@@ -332,8 +332,9 @@ def run(config_file,window,surface):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
     winner = population.run(gameplay, 1000)    
-    
-
+    f = open('test',"wt")        
+    json.dump(winner, f)
+    f.close()
 
 if __name__ == '__main__':
     pygame.init()
