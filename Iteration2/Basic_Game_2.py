@@ -54,10 +54,6 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'up'
             self.speed = self.normal_speed
         
-            
-class Computer(Player):
-    pass
-
 class Block(pygame.sprite.Sprite):
     def __init__(self,position,block_width):
         super().__init__()
@@ -66,8 +62,8 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
-        self.rect.x = self.position[0]
-        self.rect.y = self.position[1]
+
+        self.rect.x, self.rect.y = position
     def update(self):
         pass
 
@@ -80,6 +76,7 @@ class SideBlock(Block):
             self.position[0] = size[0] - self.distance - self.block_width
         elif self.position[0] < self.distance + block_width//2:
             self.position[0] = self.distance + block_width//2
+
     def update(self):
         if self.rect.centerx > self.position[0] + self.distance:
             self.direction = 'left'
@@ -108,10 +105,6 @@ class VerticalBlock(Block):
             self.rect.y += 1
 
         
-        
-class Alien():
-    pass
-
 def move(direction,block_y,sprite_group):
     for sprite in sprite_group:
         sprite.rect.y += direction

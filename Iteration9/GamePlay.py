@@ -83,8 +83,7 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
-        self.rect.x = self.position[0]
-        self.rect.y = self.position[1]
+        self.rect.x, self.rect.y = position
         self.type = 'still'
     def update(self):
         pass
@@ -231,22 +230,21 @@ def gameplay(window,surface,mode):
         if max >= len(player_list):
             max = len(player_list) - 1
 
-        if player_list[max].rect.y < SIZE[1]//3 :            
-            if block_y > -10:
-                block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
-                block_type = choose_block_type(player_list[max].score)
-                if block_type == 'move':
-                    new_block = SideBlock([block_x,block_y], block_width)
-                elif block_type == 'still':
-                    new_block = Block([block_x,block_y], block_width)
-                elif block_type == 'vertical':
-                    block_y -= vertical_distance//2 
-                    new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
-                    block_y -= vertical_distance//2
-                elif block_type == 'onetime':
-                    new_block = OneTimeBlock([block_x,block_y], block_width)
-                block_group.add(new_block)
-                all_sprites_group.add(new_block)
+        if player_list[max].rect.y < SIZE[1]//3 and block_y > -10:
+            block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
+            block_type = choose_block_type(player_list[max].score)
+            if block_type == 'move':
+                new_block = SideBlock([block_x,block_y], block_width)
+            elif block_type == 'still':
+                new_block = Block([block_x,block_y], block_width)
+            elif block_type == 'vertical':
+                block_y -= vertical_distance//2 
+                new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
+                block_y -= vertical_distance//2
+            elif block_type == 'onetime':
+                new_block = OneTimeBlock([block_x,block_y], block_width)
+            block_group.add(new_block)
+            all_sprites_group.add(new_block)
         
         if count % 15 == 0:
             block_width = int(round(-60/(1+1.0003**(5000 - high_score)) + 160))
@@ -306,6 +304,6 @@ if __name__ == "__main__":
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
-    if gameplay(SIZE,screen,'double') == 'gameover':
+    if gameplay(SIZE,screen,'single') == 'gameover':
         pass
     pygame.quit()
