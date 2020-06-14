@@ -285,7 +285,8 @@ def gameplay(window,surface,mode):
             game_over = True
             return 'lost',[player1.score,player2.score]
         
-        screen.blit(background_image_1,(0,0))
+        #screen.blit(background_image_1,(0,0))
+        screen.fill(BLACK)
         all_sprites_group.update()
         for player in player_list:
             screen.blit(player.image,player.rect)
@@ -301,6 +302,7 @@ def gameplay(window,surface,mode):
         clock.tick(60)
 
 if __name__ == "__main__":
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)

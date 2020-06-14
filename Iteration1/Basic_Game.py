@@ -8,11 +8,11 @@ PATH = sys.path[0]
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.width = 20
+        self.width = 30
         #Logo = pygame.image.load(os.path.join(SCRIPT_PATH,"images","logo.bmp")).convert()
         #Logo = pygame.transform.smoothscale(Logo, (550,293))
         self.image = pygame.Surface([self.width,self.width])
-        self.image.fill(WHITE)
+        self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.rect.x = size[0]//2
         self.rect.y = size[1] - self.width
@@ -46,9 +46,6 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'up'
             self.speed = self.normal_speed
         
-            
-class Computer(Player):
-    pass
 
 class Block(pygame.sprite.Sprite):
     def __init__(self,position,block_width):
