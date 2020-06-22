@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.right = SIZE[0]//2
             elif self.rect.x < 0:
                 self.rect.x = 0
-        if self.speed > self.terminal_velocity:
+        if self.speed > self.terminal_velocity and self.direction == "down":
             self.speed = self.terminal_velocity
 
     def change_speed(self):
@@ -90,11 +90,11 @@ class Block(pygame.sprite.Sprite):
         self.position = position
         self.block_width = block_width
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
-        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
+        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 25])
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
         self.type = 'still'
-        self.coin = Coin([self.rect.centerx,self.rect.y - 40])
+        self.coin = Coin([self.rect.centerx + random.randint(-10,10),self.rect.y - random.randint(40,100)])
 
     def update(self):
         pass
@@ -157,11 +157,11 @@ class OneTimeBlock(Block):
 class Coin(pygame.sprite.Sprite):
     def __init__(self,position):
         super().__init__()
-        self.block_width = 25
+        self.block_width = 33
         self.image = pygame.image.load(os.path.join(PATH,"images","coin.png")).convert_alpha()
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, self.block_width])
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = position
+        self.rect.centerx, self.rect.y = position
 
     def update(self):
         pass
@@ -179,7 +179,7 @@ def move(direction,block_y,sprite_group,player):
     return block_y
 
 def set_block(block_x,block_y,block_width,tolerance):
-    temp_y = random.randint(130,140)
+    temp_y = random.randint(150,160)
     block_y = list(map(lambda x:x - temp_y, block_y))
     far_left = block_x - block_width
     far_right = SIZE[0]- block_x - block_width*2
@@ -202,43 +202,37 @@ def gameplay(window,surface):
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     all_sprites_group = pygame.sprite.Group()
     player_list = []
-    block_group1 = pygame.sprite.Group()
-    block_group2 = pygame.sprite.Group()
-    block_group_list = [block_group1,block_group2]
+    block_group_list = [pygame.sprite.Group(),pygame.sprite.Group()]
     coin_group = pygame.sprite.Group()
     block_width = 150
     tolerance = 200
     vertical_distance = 60
     block_x = SIZE[0]//2
     block_y = [SIZE[1] - 50,SIZE[1] - 50]
-    new_block1 = Block([block_x//2,block_y[0]], block_width)
-    new_block2 = Block([block_x//2 +SIZE[0]//2,block_y[1]], block_width)
+    new_block = [Block([block_x//2,block_y[0]], block_width),Block([block_x//2 +SIZE[0]//2,block_y[1]], block_width)]
     start_block = Block([0,SIZE[1]-20],SIZE[0])
-    block_group1.add(new_block1)
-    block_group2.add(new_block2)
-    all_sprites_group.add(start_block,new_block1,new_block2)
+    block_group_list[0].add(new_block[0])
+    block_group_list[1].add(new_block[1])
+    all_sprites_group.add(start_block,new_block)
 
     while max(block_y) > 70:
         block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
         new_block1 = Block([block_x//2,block_y[0]], block_width)
         new_block2 = Block([block_x//2 +SIZE[0]//2,block_y[1]], block_width)
-        block_group1.add(new_block1)
-        block_group2.add(new_block2)
+        block_group_list[0].add(new_block1)
+        block_group_list[1].add(new_block2)
         if random.choice([True,False]):
-            coin_group.add(new_block2.coin,new_block2.coin)
-    all_sprites_group.add(coin_group,block_group1, block_group2)
-        
+            coin_group.add(new_block1.coin,new_block2.coin)     
     player1 = Player(round(SIZE[0]*0.25))
     player2 = Player(round(SIZE[0]*0.75),True)
     player_list += [player1,player2]
-    all_sprites_group.add(player1,player2)
+    all_sprites_group.add(player1,player2,coin_group,block_group_list)
     game_over = False
     clock = pygame.time.Clock()
     count = 0
     high_score = 0
     max_score = 0
-    score_font = pygame.font.Font("freesansbold.ttf", 20) 
-    scroll = True
+    score_font = pygame.font.Font("freesansbold.ttf", SIZE[0]//64) 
     
 # -------------- Main Program Loop ---------------- #
     while not game_over:
@@ -252,25 +246,23 @@ def gameplay(window,surface):
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
-            player1.move('right')
-        elif keys[pygame.K_LEFT]:
-            player1.move('left')
-        if keys[pygame.K_a]:
-            player2.move('left')
-        elif keys[pygame.K_d]:
             player2.move('right')
+        elif keys[pygame.K_LEFT]:
+            player2.move('left')
+        if keys[pygame.K_a]:
+            player1.move('left')
+        elif keys[pygame.K_d]:
+            player1.move('right')
 
         for i,player in enumerate(player_list):
             player.set_score(start_block)
             if player.score > high_score:
                 high_score = player.score
                 max_score = i
-
         if player1.alive:
-            player1.collision(block_group1)
+            player1.collision(block_group_list[0])
         if player2.alive:
-            player2.collision(block_group2)
-            
+            player2.collision(block_group_list[1])            
         if max_score >= len(player_list):
             max_score = len(player_list) - 1
 
@@ -278,41 +270,36 @@ def gameplay(window,surface):
             block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
             block_type = choose_block_type(player_list[max_score].score)
             if block_type == 'move':
-                new_block1 = SideBlock([block_x//2,block_y[0]], block_width)
-                new_block2 = SideBlock([block_x//2 + SIZE[0]//2,block_y[1]], block_width)
+                new_block = [SideBlock([block_x//2,block_y[0]], block_width), SideBlock([block_x//2 + SIZE[0]//2,block_y[1]], block_width)]
             elif block_type == 'still':
-                new_block1 = Block([block_x//2,block_y[0]], block_width)
-                new_block2 = Block([block_x//2 + SIZE[0]//2,block_y[1]], block_width)
+                new_block = [Block([block_x//2,block_y[0]], block_width),Block([block_x//2 + SIZE[0]//2,block_y[1]], block_width)]
             elif block_type == 'vertical':
                 block_y = list(map(lambda x:x - vertical_distance//2,block_y)) 
-                new_block1 = VerticalBlock([block_x//2,block_y[0]], block_width, vertical_distance)
-                new_block2 = VerticalBlock([block_x//2+SIZE[0]//2,block_y[1]], block_width, vertical_distance)
+                new_block = [VerticalBlock([block_x//2,block_y[0]], block_width, vertical_distance),VerticalBlock([block_x//2+SIZE[0]//2,block_y[1]], block_width, vertical_distance)]
                 block_y = list(map(lambda x:x - vertical_distance//2,block_y)) 
-                new_block1.coin = None
-                new_block2.coin = None
+                new_block[0].coin = None
+                new_block[1].coin = None
             elif block_type == 'onetime':
-                new_block1 = OneTimeBlock([block_x//2,block_y[0]], block_width)
-                new_block2 = OneTimeBlock([block_x//2+SIZE[0]//2,block_y[1]], block_width)
-            block_group1.add(new_block1)
-            block_group2.add(new_block2)
-            all_sprites_group.add(new_block1,new_block2)
-            if random.choice([True,False]) and new_block1.coin != None:
-                coin_group.add(new_block1.coin,new_block2.coin)
-                all_sprites_group.add(new_block1.coin,new_block2.coin)
+                new_block = [OneTimeBlock([block_x//2,block_y[0]], block_width),OneTimeBlock([block_x//2+SIZE[0]//2,block_y[1]], block_width)]
+            block_group_list[0].add(new_block[0])
+            block_group_list[1].add(new_block[1])
+            all_sprites_group.add(new_block)
+            if random.choice([True,False]) and new_block[0].coin != None:
+                coin_group.add(new_block[0].coin,new_block[1].coin)
+                all_sprites_group.add(new_block[0].coin,new_block[1].coin)
 
         coin1_hit_list = pygame.sprite.spritecollide(player_list[0],coin_group,True)
-        player_list[0].score += len(coin1_hit_list * 400)
+        player_list[0].score += len(coin1_hit_list * 800)
         if len(player_list) > 1:
             coin2_hit_list = pygame.sprite.spritecollide(player_list[1],coin_group,True)
-            player_list[1].score += len(coin2_hit_list * 400)
+            player_list[1].score += len(coin2_hit_list * 800)
         
         if count % 15 == 0:
             block_width = int(round(-60/(1+1.0003**(5000 - high_score)) + 160))
 
         if count % 13 == 0:
             tolerance = int(round(60/(1+1.0003**(5000 - high_score)) + 190))
-
-        
+   
         if player1.rect.y < 0:
             block_y = move(11,block_y,all_sprites_group,1)
         elif player1.rect.y < SIZE[1]//6 and player1.rect.y > 0:
@@ -329,18 +316,15 @@ def gameplay(window,surface):
 
         for block_group in block_group_list:
             for block in block_group:
-                if block.rect.y > SIZE[1] + 30:
+                if block.rect.y > SIZE[1] + 30 or (block.type == "onetime" and block.hit > 0):
                     block.kill()
-                if block.type == 'onetime':
-                    if block.hit > 0:
-                        block.kill()
         
         for player in player_list:
             if player.rect.top > SIZE[1]:
                     player_list.pop(player_list.index(player))
                     player.kill()
 
-        if len(player_list) == 0:
+        if not player_list:
             game_over = True
             return 'lost',[player1.score,player2.score]
         
@@ -350,13 +334,11 @@ def gameplay(window,surface):
             screen.blit(player1.image,player1.rect)
         if player2.alive:
             screen.blit(player2.image,player2.rect)
-        block_group1.draw(screen)
-        block_group2.draw(screen)
+        block_group_list[0].draw(screen)
+        block_group_list[1].draw(screen)
         coin_group.draw(screen)
-        score1_display = score_font.render("Player 1 Score: " + str(player1.score), True, BLACK)
-        screen.blit(score1_display,(SIZE[0]//20, SIZE[1]//20))
-        score2_display = score_font.render("Player 2 Score: " + str(player2.score), True, BLACK)
-        screen.blit(score2_display,(SIZE[0]//20 + SIZE[0]//2, SIZE[1]//10))
+        screen.blit(score_font.render("Player 1 Score: " + str(player1.score), True, BLACK),(SIZE[0]//20, SIZE[1]//20))
+        screen.blit(score_font.render("Player 2 Score: " + str(player2.score), True, BLACK),(SIZE[0]//20 + SIZE[0]//2, SIZE[1]//20))
         pygame.display.flip()
         clock.tick(60)
 
@@ -364,8 +346,9 @@ if __name__ == "__main__":
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
     infoObject = pygame.display.Info()
-    SIZE = (infoObject.current_w, infoObject.current_h)
-    screen = pygame.display.set_mode(SIZE)
+    SIZE = (infoObject.current_w, infoObject.current_h - 50)
+    print(SIZE[1])
+    screen = pygame.display.set_mode(SIZE,pygame.RESIZABLE)
     if gameplay(SIZE,screen) == 'gameover':
         pass
     pygame.quit()

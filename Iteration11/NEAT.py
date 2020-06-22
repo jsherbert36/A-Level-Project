@@ -16,8 +16,7 @@ class Player(pygame.sprite.Sprite):
         self.width = 40
         self.image_list = []
         for i in range(1,9):
-            temp_image = pygame.image.load(os.path.join(PATH,"images",("frame-"+str(i)+ ".png"))).convert()
-            temp_image.set_colorkey(BLACK)
+            temp_image = pygame.image.load(os.path.join(PATH,"images",("frame-"+str(i)+ ".png"))).convert_alpha()
             self.image_list.append(pygame.transform.smoothscale(temp_image, [self.width, self.width]))
         self.image = self.image_list[0]
         self.image_num = 0

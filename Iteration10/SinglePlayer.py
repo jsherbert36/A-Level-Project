@@ -84,10 +84,10 @@ class Block(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
         self.type = 'still'
-        if random.choice([True,False]) == True:
-            self.coin = Coin([self.rect.centerx,self.rect.y - 40])
-        else:
-            self.coin = None
+        #if random.choice([True,False]) == True:
+        self.coin = Coin([self.rect.centerx,self.rect.y - 40])
+        #else:
+            #self.coin = None
 
     def update(self):
         pass
@@ -144,10 +144,11 @@ class OneTimeBlock(Block):
 class Coin(pygame.sprite.Sprite):
     def __init__(self,position):
         super().__init__()
-        self.block_width = 25
-        self.image = pygame.image.load(os.path.join(PATH,"images","coin.png")).convert_alpha()
-        self.image = pygame.transform.smoothscale(self.image, [self.block_width, self.block_width])
-
+        self.block_width = 30
+        #self.image = pygame.image.load(os.path.join(PATH,"images","coin.png")).convert_alpha()
+        #self.image = pygame.transform.smoothscale(self.image, [self.block_width, self.block_width])
+        self.image = pygame.Surface([self.block_width,self.block_width])
+        self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
 
@@ -245,7 +246,7 @@ def gameplay(window,surface):
                 block_y -= vertical_distance//2 
                 new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance)
                 block_y -= vertical_distance//2
-                new_block.coin = None
+                #new_block.coin = None
             elif block_type == 'onetime':
                 new_block = OneTimeBlock([block_x,block_y], block_width)
             block_group.add(new_block)
@@ -282,7 +283,6 @@ def gameplay(window,surface):
             return 'lost',[player1.score]
         
         screen.blit(background_image_1,(0,0))
-        #screen.fill(BLACK)
         all_sprites_group.update()
         screen.blit(player1.image,player1.rect)
         block_group.draw(screen)

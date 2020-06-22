@@ -8,16 +8,18 @@ PATH = sys.path[0]
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
-    SIZE = (1280,720)
-    screen = pygame.display.set_mode(SIZE)
+    infoObject = pygame.display.Info()
+    SIZE = (infoObject.current_w, infoObject.current_h - 30)
+    screen = pygame.display.set_mode(SIZE,pygame.RESIZABLE)
     pygame.display.set_caption("NEAT-JUMP")
     choice = None
-    while choice != 'gameover':
+    result = None
+    while choice != 'gameover'and result != "gameover":
         choice = Menu.Menu1(SIZE,screen)
         if choice == 'single':
-            result = SinglePlayer.gameplay(SIZE,screen)
+            result,score = SinglePlayer.gameplay(SIZE,screen)
         elif choice == 'double':
-            result = DoublePlayer.gameplay(SIZE,screen)
+            result,score = DoublePlayer.gameplay(SIZE,screen)
         elif choice == 'computer':
             pass
         elif choice == 'learn':

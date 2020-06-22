@@ -7,7 +7,7 @@ PATH = sys.path[0]
 class Button():
     def __init__(self,y_pos,size,text,action):
         self.size = size
-        self.font = pygame.font.Font('freesansbold.ttf',self.size)
+        self.font = pygame.font.Font(os.path.join(PATH,"images","MenuFont.ttf"),self.size)
         self.colour = BLACK
         self.text = text
         self.object = self.font.render(self.text, True, self.colour)
@@ -31,7 +31,7 @@ def Menu1(window,surface):
     SIZE = window
     screen = surface
     choice = False
-    button_size = 70
+    button_size = 90
     button_list = []
     button_list.append(Button(SIZE[1]//2 - button_size*3,button_size,'Single Player','single'))
     button_list.append(Button(SIZE[1]//2 - button_size,button_size,'Two Player','double'))
@@ -57,8 +57,7 @@ def Menu1(window,surface):
                         choice = True
                         return 'gameover'
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    for button in button_list:
-                        
+                    for button in button_list:                      
                         if button.rect.collidepoint(mouse):
                             return button.action
 

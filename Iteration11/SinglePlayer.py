@@ -80,12 +80,12 @@ class Block(pygame.sprite.Sprite):
         self.position = position
         self.block_width = block_width
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
-        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
+        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 25])
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
         self.type = 'still'
         if random.choice([True,False]) == True:
-            self.coin = Coin([self.rect.centerx,self.rect.y - 40])
+            self.coin = Coin([self.rect.centerx + random.randint(-10,10),self.rect.y - random.randint(40,100)])
         else:
             self.coin = None
 
@@ -144,12 +144,11 @@ class OneTimeBlock(Block):
 class Coin(pygame.sprite.Sprite):
     def __init__(self,position):
         super().__init__()
-        self.block_width = 25
+        self.block_width = 33
         self.image = pygame.image.load(os.path.join(PATH,"images","coin.png")).convert_alpha()
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, self.block_width])
-
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = position
+        self.rect.centerx, self.rect.y = position
 
     def update(self):
         pass
@@ -163,7 +162,7 @@ def move(direction,block_y,sprite_group):
     return block_y
 
 def set_block(block_x,block_y,block_width,tolerance):
-    block_y -= random.randint(130,140)
+    block_y -= random.randint(150,160)
     far_left = block_x - block_width//2
     far_right = SIZE[0]- block_x - block_width
     block_x += random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
@@ -210,7 +209,7 @@ def gameplay(window,surface):
     count = 0
     high_score = 0
     max = 0
-    score_font = pygame.font.Font("freesansbold.ttf", 20) 
+    score_font = pygame.font.Font("freesansbold.ttf", SIZE[0]//64) 
     scroll = True
     
 # -------------- Main Program Loop ---------------- #
@@ -255,7 +254,7 @@ def gameplay(window,surface):
                 all_sprites_group.add(new_block.coin)
 
         coin_hit_list = pygame.sprite.spritecollide(player1,coin_group,True)
-        player1.score += len(coin_hit_list * 200)
+        player1.score += len(coin_hit_list * 800)
         
         if count % 15 == 0:
             block_width = int(round(-60/(1+1.0003**(5000 - high_score)) + 160))
@@ -264,7 +263,7 @@ def gameplay(window,surface):
             tolerance = int(round(60/(1+1.0003**(5000 - high_score)) + 190))
 
         if player1.rect.y < 0:
-            block_y = move(11,block_y,all_sprites_group)
+            block_y = move(15,block_y,all_sprites_group)
         elif player1.rect.y < SIZE[1]//6 and player1.rect.y > 0:
             block_y = move(7,block_y,all_sprites_group)
         elif player1.rect.y < SIZE[1]//3 and player1.rect.y > SIZE[1]//6:
@@ -282,7 +281,6 @@ def gameplay(window,surface):
             return 'lost',[player1.score]
         
         screen.blit(background_image_1,(0,0))
-        #screen.fill(BLACK)
         all_sprites_group.update()
         screen.blit(player1.image,player1.rect)
         block_group.draw(screen)
@@ -295,7 +293,8 @@ def gameplay(window,surface):
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
-    SIZE = (1280,720)
+    infoObject = pygame.display.Info()
+    SIZE = (infoObject.current_w, infoObject.current_h)
     screen = pygame.display.set_mode(SIZE)
     if gameplay(SIZE,screen) == 'gameover':
         pass
