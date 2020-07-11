@@ -9,6 +9,7 @@ high_score = 0
 high_net = None
 slow = False
 max_score_list = []
+game_over = False
 
 class Computer(pygame.sprite.Sprite):
     def __init__(self):
@@ -103,12 +104,12 @@ class Computer(pygame.sprite.Sprite):
         elif self.horizontal_direction == 'left':
             self.rect.x -= 9
 
-    def check_directions(self,SIZE,block_list):
+    def check_directions(self,SIZE,block_group):
         temp_rect = self.rect
         self.final_distance = [0,0,0,0] #[right,left,down,up]
         self.rect = pygame.Rect(self.rect.x, self.rect.y, SIZE[0], self.width)
         distance = [math.inf]
-        for block in block_list:
+        for block in block_group:
             if self.rect.colliderect(block.rect):
                 distance.append(abs(block.rect.x + block.block_width - self.rect.x + self.width/2))
         if len(distance) > 1:
@@ -116,7 +117,7 @@ class Computer(pygame.sprite.Sprite):
         distance = [math.inf]
         self.rect = temp_rect
         self.rect = pygame.Rect(self.rect.x - SIZE[0], self.rect.y, SIZE[0], self.width)
-        for block in block_list:
+        for block in block_group:
             if self.rect.colliderect(block.rect):
                 distance.append(abs(block.rect.x + block.block_width - self.rect.x + self.width/2))
         if len(distance) > 1:
@@ -124,7 +125,7 @@ class Computer(pygame.sprite.Sprite):
         distance = [math.inf]
         self.rect = temp_rect
         self.rect = pygame.Rect(self.rect.x, self.rect.y, self.width, SIZE[0])
-        for block in block_list:
+        for block in block_group:
             if self.rect.colliderect(block.rect):
                 distance.append(abs(block.rect.y + block.rect.height - self.rect.y - self.width/2))
         if len(distance) > 1:
@@ -132,7 +133,7 @@ class Computer(pygame.sprite.Sprite):
         distance = [math.inf]
         self.rect = temp_rect
         self.rect = pygame.Rect(self.rect.x, self.rect.y - SIZE[0], self.width, SIZE[0])
-        for block in block_list:
+        for block in block_group:
             if self.rect.colliderect(block.rect):
                 distance.append(abs(block.rect.y + block.rect.height - self.rect.y - self.width/2))
         if len(distance) > 1:
@@ -140,10 +141,10 @@ class Computer(pygame.sprite.Sprite):
         self.rect = temp_rect
         return self.final_distance
 
-    def check_quadrants(self,SIZE,block_list):
+    def check_quadrants(self,SIZE,block_group):
         self.final_distance2 = [0,0,0,0]
         distance = [[math.inf],[math.inf],[math.inf],[math.inf]]
-        for block in block_list:
+        for block in block_group:
             if block.rect.centerx > self.rect.centerx and block.rect.y < self.rect.y:
                 distance[0].append(math.sqrt(((block.rect.centerx - self.rect.centerx)**2)+((self.rect.y - block.rect.y)**2)))
             elif block.rect.centerx < self.rect.centerx and block.rect.y > self.rect.y:
@@ -166,12 +167,52 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.image.load(os.path.join(PATH,"images","Basic_Block.png")).convert()
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
-        self.rect.x = self.position[0]
-        self.rect.y = self.position[1]
+        self.rect.x, self.rect.y = position
 
-def move(direction,block_y,block_list,player_list,start_block):
-    for block in block_list:
+    def update(self):
+        pass
+
+class SideBlock(Block):
+    def __init__(self,position,block_width,number):
+        super().__init__(position,block_width,number)
+        self.direction = random.choice(['left','right'])
+        self.distance = 120
+        if self.position[0] > SIZE[0] - self.distance - self.block_width:
+            self.position[0] = SIZE[0] - self.distance - self.block_width
+        elif self.position[0] < self.distance + block_width//2:
+            self.position[0] = self.distance + block_width//2
+
+    def update(self):
+        if self.rect.centerx > self.position[0] + self.distance:
+            self.direction = 'left'
+        elif self.rect.centerx < self.position[0] - self.distance:
+            self.direction = 'right'
+        if self.direction == 'left':
+            self.rect.x -= 2
+        elif self.direction == 'right':
+            self.rect.x += 2
+
+class VerticalBlock(Block):
+    def __init__(self,position,block_width,distance,number):
+        super().__init__(position,block_width,number)
+        self.direction = random.choice(['up','down'])
+        self.distance = distance
+        
+    def update(self):
+        if self.rect.centery < self.position[1] - self.distance:
+            self.direction = 'down'
+        elif self.rect.centery > self.position[1] + self.distance:
+            self.direction = 'up'
+        if self.direction == 'up':
+            self.rect.y -= 1
+        elif self.direction == 'down':
+            self.rect.y += 1
+
+def move(direction,block_y,block_group,player_list,start_block):
+    for block in block_group:
         block.rect.y += direction
+        if isinstance(block,VerticalBlock):
+            block.position[1] += direction 
     for player in player_list:
         player.rect.y += direction
     start_block.rect.y += direction
@@ -184,12 +225,20 @@ def set_block(block_x,block_y,block_width,tolerance):
     far_right = SIZE[0]- block_x - block_width
     block_x += random.randint(-1 * min(tolerance,far_left),min(far_right,tolerance))
     return block_x,block_y
+
+def choose_block_type(height):
+    if height > 1500 and height < 10000:
+        return random.choice(['move','still','still','still','still','vertical'])
+    elif height >= 10000:
+        return random.choice(['move','still','still','vertical'])
+    else:
+        return 'still'
     
 def gameplay(genomes,config):
-    global generation
-    global high_net
-    global high_score
-    global slow
+    global game_over
+    if game_over:
+        return 'gameover'
+    global generation,high_net,high_score,slow
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     generation += 1
@@ -197,9 +246,10 @@ def gameplay(genomes,config):
     player_list = []
     genome_list = []
     nn_list = []
-    block_list = []
+    block_group = pygame.sprite.Group()
     block_count = 0
     tolerance = 220
+    vertical_distance = 60
 
     for genome_id,genome in genomes:
         genome.fitness = 0
@@ -214,13 +264,12 @@ def gameplay(genomes,config):
     block_x,block_y = SIZE[0]//2,SIZE[1] - 50
     new_block = Block([block_x,block_y], block_width,block_count)
     block_count += 1
-    block_list.append(new_block)
+    block_group.add(new_block)
     while block_y > 70:
         block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
         new_block = Block([block_x,block_y], block_width,block_count)
         block_count += 1
-        block_list.append(new_block)   
-    game_over = False
+        block_group.add(new_block)  
     clock = pygame.time.Clock()
     current_score = 0
     max_index = 0
@@ -238,7 +287,7 @@ def gameplay(genomes,config):
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
                     return 'gameover'
-                elif event.key == pygame.K_q:
+                elif event.key == pygame.K_SPACE:
                     slow = not slow
         
         current_score = 0
@@ -247,15 +296,15 @@ def gameplay(genomes,config):
             player.set_score(start_block)
             genome_list[i].fitness = player.fitness 
             player.move()
-            player.collision(block_list)
+            player.collision(block_group)
             if player.score > current_score:
                 current_score = player.score
                 max_index = i
                 max_net = nn_list[i]
             if player.score > max_score:
                 max_score = player.score
-            distance1 = player.check_directions(SIZE,block_list)
-            distance2 = player.check_quadrants(SIZE,block_list)
+            distance1 = player.check_directions(SIZE,block_group)
+            distance2 = player.check_quadrants(SIZE,block_group)
             nn_output = nn_list[i].activate(distance1 + distance2)
             position = nn_output.index(max(nn_output))
             if position == 0 and nn_output[0] > 0.5:
@@ -276,10 +325,18 @@ def gameplay(genomes,config):
 
         if player_list[max_index].rect.y < SIZE[0]//5 :            
             if block_y > -10:
-                block_x,block_y = set_block(block_x,block_y,block_width,tolerance)
-                new_block = Block([block_x,block_y], block_width,block_count)
+                block_x,block_y = set_block(block_x,block_y,block_width,tolerance)                
+                block_type = choose_block_type(player_list[max_index].score)
+                if block_type == 'move':
+                    new_block = SideBlock([block_x,block_y], block_width,block_count)
+                elif block_type == 'still':
+                    new_block = Block([block_x,block_y], block_width,block_count)
+                elif block_type == 'vertical':
+                    block_y -= vertical_distance//2 
+                    new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance,block_count)
+                    block_y -= vertical_distance//2            
                 block_count += 1
-                block_list.append(new_block)
+                block_group.add(new_block)
 
         if count % 15 == 0:
             block_width = int(round(-60/(1+1.0003**(5000-max_score)) + 160))
@@ -288,15 +345,15 @@ def gameplay(genomes,config):
             tolerance = int(round(60/(1+1.0003**(5000-max_score)) + 190))
 
         if player_list[max_index].rect.y < 0:
-            block_y = move(11,block_y,block_list,player_list,start_block)
+            block_y = move(11,block_y,block_group,player_list,start_block)
         elif player_list[max_index].rect.y < SIZE[1]//6 and player_list[max_index].rect.y > 0:
-            block_y = move(7,block_y,block_list,player_list,start_block)
+            block_y = move(7,block_y,block_group,player_list,start_block)
         elif player_list[max_index].rect.y < SIZE[1]//3 and player_list[max_index].rect.y > SIZE[1]//6:
-            block_y = move(4,block_y,block_list,player_list,start_block)
+            block_y = move(4,block_y,block_group,player_list,start_block)
             
-        for block in block_list:
+        for block in block_group:
             if block.rect.y > SIZE[1] + 30:
-                block_list.pop(block_list.index(block))
+                block.kill()
 
         for player in player_list:
             if player.rect.top > SIZE[0] or player.score_count > 500:
@@ -306,9 +363,8 @@ def gameplay(genomes,config):
                 player_list.pop(player_list.index(player))
 
         screen.blit(background_image_1,(0,0))     
-        for block in block_list:
-            block.update
-            screen.blit(block.image,block.rect)
+        block_group.update()
+        block_group.draw(screen)
         for player in player_list:
             player.update()
             screen.blit(player.image,player.rect)
@@ -329,13 +385,13 @@ def gameplay(genomes,config):
     max_score_list.append(max_score)
 
 def run(config_file,window,surface):
-    global SIZE,screen
+    global SIZE,screen,game_over
     SIZE = window
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
     winner = population.run(gameplay, 200)
-    if __name__ == "__main__":
+    if __name__ == "__main__" and not game_over:
         test_database = shelve.open("test_database")
         test_database["test"] = high_net
         test_database.close()
@@ -349,6 +405,6 @@ if __name__ == '__main__':
     pygame.init()
     SIZE = (1280,720)
     screen = pygame.display.set_mode(SIZE)
-    pygame.display.set_caption("NEAT-Jump")
+    pygame.display.set_caption("NEAT-JUMP")
     run(os.path.join(PATH,"config1.txt"),SIZE,screen)
 

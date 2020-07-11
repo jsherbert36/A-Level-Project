@@ -210,7 +210,6 @@ def gameplay(window,surface):
     high_score = 0
     max = 0
     score_font = pygame.font.Font("freesansbold.ttf", SIZE[0]//64) 
-    scroll = True
     
 # -------------- Main Program Loop ---------------- #
     while not game_over:
@@ -272,9 +271,8 @@ def gameplay(window,surface):
         for block in block_group:
             if block.rect.y > SIZE[1] + 30:
                 block.kill()
-            if block.type == 'onetime':
-                if block.hit > 0:
-                    block.kill()
+            if block.type == 'onetime' and block.hit > 0:
+                block.kill()
 
         if player1.rect.top > SIZE[1]:
             game_over = True
