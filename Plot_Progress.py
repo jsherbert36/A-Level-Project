@@ -17,7 +17,7 @@ def input_list(name = ''):
     return (json.load(f))
     f.close()
 
-generation_scores = input_list("score_list (2).json")
+generation_scores = input_list("score_list.json")
 plt.plot(generation_scores)
 plt.title('Progress of NEAT Algorithm')
 plt.ylabel('Best Score')

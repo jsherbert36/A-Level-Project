@@ -23,5 +23,5 @@ if __name__ == "__main__":
         elif choice == 'computer':
             pass
         elif choice == 'learn':
-            result = NEAT.run(os.path.join(PATH,"config2.txt"),SIZE,screen)
+            result = NEAT.run(SIZE,screen)
     pygame.quit()
