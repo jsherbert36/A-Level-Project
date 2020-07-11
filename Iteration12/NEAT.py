@@ -237,7 +237,7 @@ def choose_block_type(height):
 def gameplay(genomes,config):
     global game_over
     if game_over:
-        return 'gameover'
+        return 3
     global generation,high_net,high_score,slow
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
@@ -282,11 +282,11 @@ def gameplay(genomes,config):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
-                return 'gameover'
+                return 3
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
-                    return 'gameover'
+                    return 3
                 elif event.key == pygame.K_SPACE:
                     slow = not slow
         
@@ -390,7 +390,7 @@ def run(config_file,window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    winner = population.run(gameplay, 200)
+    best_genome = population.run(gameplay, 200)
     if __name__ == "__main__" and not game_over:
         test_database = shelve.open("test_database")
         test_database["test"] = high_net
