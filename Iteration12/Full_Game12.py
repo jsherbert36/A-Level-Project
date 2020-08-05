@@ -15,7 +15,7 @@ if __name__ == "__main__":
     choice = None
     result = None
     while choice != 'gameover'and result != "gameover":
-        choice = Menu.Menu1(SIZE,screen)
+        choice = Menu.Main_Menu(SIZE,screen)
         if choice == 'single':
             result,score = SinglePlayer.gameplay(SIZE,screen)
         elif choice == 'double':
