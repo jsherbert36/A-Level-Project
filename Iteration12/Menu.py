@@ -2,6 +2,7 @@ import math,pygame,random,sys,os
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (204,0,0)
+GREY = (140, 140, 140)
 PATH = sys.path[0]
 
 class Button():
@@ -28,21 +29,32 @@ class Button():
         self.object = self.font.render(self.text, True, self.colour)
 
 class Text_Box():
-    def __init__(self,center,dimensions,text=''):
-        self.rect = pygame.Rect(center[0] - dimensions[0]//2, centerr[1] - dimensions[1]//2, dimensions[0], dimensions[1])
+    def __init__(self,center,dimensions,field=''):
+        self.rect = pygame.Rect(center[0] - dimensions[0]//2, center[1] - dimensions[1]//2, dimensions[0], dimensions[1])
         self.colour_inactive = BLACK
         self.colour_active = RED
         self.colour = self.colour_inactive
-        self.text = text
-        self.font = pygame.font.Font(os.path.join(PATH,"images","MenuFont.ttf"),self.rect // 1.1)
-        self.font_surface = self.font.render(text, True, self.colour)
+        self.field = field
+        self.text = self.field
+        self.text_colour = GREY
+        self.font = pygame.font.Font(os.path.join(PATH,"images","MenuFont.ttf"),int(self.rect.height//1.1))
+        self.object = self.font.render(self.text, True, self.text_colour)
         self.active = False
+        self.start = True
 
-    def mouse_event(self,event):
-        if self.rect.collidepoint(event.pos):
-            self.active = not self.active
+    def mouse_event(self,pos):
+        if self.rect.collidepoint(pos):
+            self.active = True
+            if self.start == True:
+                self.start = False
+                self.text = ""
+                self.text_colour = BLACK
         else:
             self.active = False
+            if self.text == "":
+                self.start = True
+                self.text_colour = GREY
+                self.text = self.field
         if self.active:
             self.colour = self.colour_active
         else:
@@ -51,19 +63,24 @@ class Text_Box():
     def key_event(self,event,keys):
         if self.active:
             if event.key == pygame.K_RETURN:
-                return text
-            elif keys[BACKSPACE]:
+                return self.text
+            elif keys[pygame.K_BACKSPACE]:
                 self.text = self.text[:-1]
             elif len(self.text) < 20:
                 self.text += event.unicode
-            self.txt_surface = FONT.render(self.text, True, self.color)
 
-    def update(self):
-        self.rect.width = max(200, self.font_surface.get_width() + 10)
+    def update(self,mouse):
+        self.rect.width = max(200, self.object.get_width() + 10)
+        self.rect.centerx = SIZE[0]//2
+        if self.rect.collidepoint(mouse):
+            self.colour = self.colour_active
+        elif not self.active:
+            self.colour = self.colour_inactive
+        self.object = self.font.render(self.text, True, self.text_colour)
 
-    def draw(self, screen):
-        screen.blit(self.font_surface, (self.rect.x + 5, self.rect.y + 5))
-        pygame.draw.rect(screen, self.color, self.rect, 4)
+    def draw(self):
+        screen.blit(self.object, (self.rect.x + 5, self.rect.y + 5))
+        pygame.draw.rect(screen, self.colour, self.rect, 4)
 
 
 def Main_Menu(window,surface):
@@ -110,31 +127,40 @@ def Game_Over_Single(window,surface):
     screen = surface
     choice = False
     button_size = 90
-    button_list = []
-    username_box = Text_Box()
-    button_list.append(Button(SIZE[1]//2 + button_size*3,button_size,'Watch it Learn','learn'))
+    username_box = Text_Box([SIZE[0]//2,SIZE[1]//2],[200,button_size],"Username")
+    button = Button(SIZE[1]//2 + button_size*3,button_size,'Watch it Learn','learn',False)
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
 
     while not choice:
-        screen.blit(background_image_1,(0,0)) 
-        mouse = pygame.mouse.get_pos()      
-        for button in button_list:
-            button.update(mouse)
-            button.draw()
+        mouse = pygame.mouse.get_pos() 
         for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:
+                choice = True
+                return 'gameover'
+            elif event.type == pygame.KEYDOWN:
+                username_box.key_event(event,pygame.key.get_pressed())
+                if event.key == pygame.K_ESCAPE:
                     choice = True
                     return 'gameover'
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        choice = True
-                        return 'gameover'
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    for button in button_list:                      
-                        if button.rect.collidepoint(mouse) and button.active:
-                            return button.action
-
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                username_box.mouse_event(mouse)                   
+                if button.rect.collidepoint(mouse) and button.active:
+                    return button.action
+            screen.blit(background_image_1,(0,0))      
+        button.update(mouse)
+        button.draw()
+        username_box.update(mouse)
+        username_box.draw()
         pygame.display.flip()       
         clock.tick(60)
+
+if __name__ == "__main__":
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+    pygame.init()
+    infoObject = pygame.display.Info()
+    SIZE = (infoObject.current_w, infoObject.current_h - 30)
+    screen = pygame.display.set_mode(SIZE,pygame.RESIZABLE)
+    pygame.display.set_caption("NEAT-JUMP")
+    Game_Over_Single(SIZE,screen)
