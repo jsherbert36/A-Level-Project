@@ -194,6 +194,15 @@ def choose_block_type(height):
     else:
         return 'still'
 
+def scroll(all_sprites_group, block_y, player,number):
+    if player.rect.y < 0:
+        block_y = move(11,block_y,all_sprites_group,number)
+    elif player.rect.y < SIZE[1]//6 and player.rect.y > 0:
+        block_y = move(7,block_y,all_sprites_group,number)
+    elif player.rect.y < SIZE[1]//3 and player.rect.y > SIZE[1]//6:
+        block_y = move(4,block_y,all_sprites_group,number)
+    return block_y
+
 def gameplay(window,surface):
     global SIZE,screen
     SIZE = window
@@ -300,19 +309,8 @@ def gameplay(window,surface):
         if count % 13 == 0:
             tolerance = int(round(60/(1+1.0003**(5000 - high_score)) + 190))
    
-        if player1.rect.y < 0:
-            block_y = move(11,block_y,all_sprites_group,1)
-        elif player1.rect.y < SIZE[1]//6 and player1.rect.y > 0:
-            block_y = move(7,block_y,all_sprites_group,1)
-        elif player1.rect.y < SIZE[1]//3 and player1.rect.y > SIZE[1]//6:
-            block_y = move(4,block_y,all_sprites_group,1)
-
-        if player2.rect.y < 0:
-            block_y = move(11,block_y,all_sprites_group,2)
-        elif player2.rect.y < SIZE[1]//6 and player2.rect.y > 0:
-            block_y = move(7,block_y,all_sprites_group,2)
-        elif player2.rect.y < SIZE[1]//3 and player2.rect.y > SIZE[1]//6:
-            block_y = move(4,block_y,all_sprites_group,2)
+        block_y = scroll(all_sprites_group,block_y,player1,1)
+        block_y = scroll(all_sprites_group,block_y,player2,2)
 
         for block_group in block_group_list:
             for block in block_group:
