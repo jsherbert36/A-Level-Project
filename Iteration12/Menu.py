@@ -165,10 +165,10 @@ def leaderboard(window,surface):
     choice = False
     button_size = 90
     button_list = []
-    button_list.append(Button(SIZE[1]//2 - button_size*3,button_size,'Single Player','single',True))
-    button_list.append(Button(SIZE[1]//2 - button_size,button_size,'Two Player','double',True))
-    button_list.append(Button(SIZE[1]//2 + button_size,button_size,'AI Player','computer',True))
-    button_list.append(Button(SIZE[1]//2 + button_size*3,button_size,'Watch it Learn','learn',True))
+    Title = Button(SIZE[1]//2 - button_size*3,button_size,'Leader Board       High Score','single',False)
+    for user in users:
+        button_list.append(Button(SIZE[1]//2 - button_size*3,button_size,user[0]+"        "+user[1],'single',False))
+
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
