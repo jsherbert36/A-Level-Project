@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,GameOver
+import math,pygame,random,sys,os,GameOver,json
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)

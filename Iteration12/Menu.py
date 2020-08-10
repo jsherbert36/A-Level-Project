@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os
+import math,pygame,random,sys,os,json
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (204,0,0)
@@ -84,8 +84,30 @@ class Text_Box():
         screen.blit(self.object, (self.rect.x + 5, self.rect.y + 5))
         pygame.draw.rect(screen, self.color, self.rect, 4)
 
+def space_buttons(button_list):
+    button_height = sum([i.rect.h for i in button_list])//len(button_list)
+    distance = (SIZE[1] - sum([i.rect.h for i in button_list]))//len(button_list)+1
+    if len(button_list) % 2 == 0:
+        y_pos = SIZE[1]//2 - distance//2
+        for i in range(len(button_list)//2-1,-1,-1):
+            button_list[i].rect.bottom = y_pos
+            y_pos -= distance + height
+        y_pos = SIZE[1]//2 + distance//2
+        for i in range(len(button_list)//2,len(button_list)):  #change to list slice
+            button_list[i].rect.top = y_pos
+            y_pos += distance + height
+    else:
+        y_pos = SIZE[1]//2
+        button_list[len(button_list)//2].rect.centery = y_pos
+        y_pos -= height//2 + distance
+        for button in button_list[len(button_list)//2-1::-1]:
+            button.rect.bottom = y_pos
+            y_pos -= distance + height
+        y_pos = SIZE[1]//2 + height//2 + distance
+        for button in button_list[len(button_list)//2+1:]:
+            #finish here
 
-def Main_Menu(window,surface):
+def main_menu(window,surface):
     global SIZE,screen
     SIZE = window
     screen = surface
@@ -94,8 +116,9 @@ def Main_Menu(window,surface):
     button_list = []
     button_list.append(Button(SIZE[1]//2 - button_size*3,button_size,'Single Player','single',True))
     button_list.append(Button(SIZE[1]//2 - button_size,button_size,'Two Player','double',True))
-    button_list.append(Button(SIZE[1]//2 + button_size,button_size,'AI Player','computer',True))
-    button_list.append(Button(SIZE[1]//2 + button_size*3,button_size,'Watch it Learn','learn',True))
+    button_list.append(Button(SIZE[1]//2,button_size,'AI Player','computer',True))
+    button_list.append(Button(SIZE[1]//2 + button_size,button_size,'Watch it Learn','learn',True))
+    button_list.append(Button(SIZE[1]//2 + button_size*3,button_size,'Leader Board','leaderboard',True))
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
@@ -123,7 +146,7 @@ def Main_Menu(window,surface):
         pygame.display.flip()       
         clock.tick(60)
 
-def Game_Over_Single(window,surface):
+def game_over_single(window,surface):
     global SIZE,screen
     SIZE = window
     screen = surface
@@ -158,6 +181,16 @@ def Game_Over_Single(window,surface):
         pygame.display.flip()       
         clock.tick(60)
 
+def pause_menu(window,surface):
+    pass
+
+def game_over_double(window,surface):
+    pass
+
+def scroll(distance,*lists):
+    for list in lists:
+        for item in list:
+            item.rect.y -= distance
 
 def leaderboard(window,surface):
     global SIZE,screen
@@ -165,8 +198,13 @@ def leaderboard(window,surface):
     screen = surface
     choice = False
     button_size = 90
-    users = [['jacob',24],['test',2],['john',54],['smith',93]]
-    button_list = [Button(button_size*2,button_size,'Leader Board      High Score','single',False,(0, 45, 179))]
+    try:
+        users = json.load(open(os.path.join(PATH,"users.json"),"rt"))
+        users = sorted(users,key=lambda i:i[1])
+    except FileNotFoundError:
+        users = []
+
+    button_list = [Button(button_size,button_size,'Leader Board      High Score','single',False,(0, 45, 179))]
     y_pos = button_list[0].rect.centery
     for user in users:
         y_pos += button_size + 40
@@ -184,17 +222,22 @@ def leaderboard(window,surface):
             button.draw()
 
         for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:
+                choice = True
+                return 'gameover'
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     choice = True
                     return 'gameover'
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        choice = True
-                        return 'gameover'
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
                     for button in button_list:                      
                         if button.rect.collidepoint(mouse) and button.active:
                             return button.action
+                elif event.button == 4 and button_list[-1].rect.bottom < SIZE[1] - 30:
+                    scroll(-10,button_list)
+                elif event.button == 5 and button_list[0].rect.top > 30:
+                    scroll(10,button_list)
 
         pygame.display.flip()       
         clock.tick(60)

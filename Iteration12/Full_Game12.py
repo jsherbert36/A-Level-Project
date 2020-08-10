@@ -14,7 +14,7 @@ pygame.display.set_icon(pygame.image.load(os.path.join(PATH,"images",("frame-1.p
 choice = None
 result = None
 while choice != 'gameover'and result != "gameover":
-    choice = Menu.Main_Menu(SIZE,screen)
+    choice = Menu.main_menu(SIZE,screen)
     if choice == 'single':
         result,score = SinglePlayer.gameplay(SIZE,screen)
     elif choice == 'double':
@@ -23,4 +23,6 @@ while choice != 'gameover'and result != "gameover":
         pass
     elif choice == 'learn':
         result = NEAT.run(SIZE,screen)
+    elif choice == 'leaderboard':
+        result = Menu.leaderboard(SIZE,screen)
 pygame.quit()
