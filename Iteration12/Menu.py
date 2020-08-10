@@ -6,12 +6,13 @@ GREY = (140, 140, 140)
 PATH = sys.path[0]
 
 class Button():
-    def __init__(self,y_pos,size,text,action,active):
+    def __init__(self,y_pos,size,text,action,active,color = BLACK):
         self.size = size
-        self.font = pygame.font.Font(os.path.join(PATH,"images","MenuFont.ttf"),self.size)
-        self.colour = BLACK
+        self.font = pygame.font.Font(os.path.join(PATH,"fonts","Folks-Bold.ttf"),self.size)
+        self.default_color = color
+        self.color = self.default_color
         self.text = text
-        self.object = self.font.render(self.text, True, self.colour)
+        self.object = self.font.render(self.text, True, self.color)
         self.rect = self.object.get_rect()
         self.rect.centerx = SIZE[0]//2
         self.rect.centery = y_pos
@@ -23,22 +24,22 @@ class Button():
 
     def update(self,mouse):
         if self.rect.collidepoint(mouse) and self.active:
-            self.colour = RED
+            self.color = RED
         else:
-            self.colour = BLACK
-        self.object = self.font.render(self.text, True, self.colour)
+            self.color = self.default_color
+        self.object = self.font.render(self.text, True, self.color)
 
 class Text_Box():
     def __init__(self,center,dimensions,field=''):
         self.rect = pygame.Rect(center[0] - dimensions[0]//2, center[1] - dimensions[1]//2, dimensions[0], dimensions[1])
-        self.colour_inactive = BLACK
-        self.colour_active = RED
-        self.colour = self.colour_inactive
+        self.color_inactive = BLACK
+        self.color_active = RED
+        self.color = self.color_inactive
         self.field = field
         self.text = self.field
-        self.text_colour = GREY
-        self.font = pygame.font.Font(os.path.join(PATH,"images","MenuFont.ttf"),int(self.rect.height//1.1))
-        self.object = self.font.render(self.text, True, self.text_colour)
+        self.text_color = GREY
+        self.font = pygame.font.Font(os.path.join(PATH,"fonts","Folks-Bold.ttf"),int(self.rect.height//1.1))
+        self.object = self.font.render(self.text, True, self.text_color)
         self.active = False
         self.start = True
         self.original_width = self.rect.width
@@ -49,17 +50,17 @@ class Text_Box():
             if self.start == True:
                 self.start = False
                 self.text = ""
-                self.text_colour = BLACK
+                self.text_color = BLACK
         else:
             self.active = False
             if self.text == "":
                 self.start = True
-                self.text_colour = GREY
+                self.text_color = GREY
                 self.text = self.field
         if self.active:
-            self.colour = self.colour_active
+            self.color = self.color_active
         else:
-            self.colour = self.colour_inactive
+            self.color = self.color_inactive
 
     def key_event(self,event,keys):
         if self.active:
@@ -74,14 +75,14 @@ class Text_Box():
         self.rect.width = max(self.original_width, self.object.get_width() + 10)
         self.rect.centerx = SIZE[0]//2
         if self.rect.collidepoint(mouse):
-            self.colour = self.colour_active
+            self.color = self.color_active
         elif not self.active:
-            self.colour = self.colour_inactive
-        self.object = self.font.render(self.text, True, self.text_colour)
+            self.color = self.color_inactive
+        self.object = self.font.render(self.text, True, self.text_color)
 
     def draw(self):
         screen.blit(self.object, (self.rect.x + 5, self.rect.y + 5))
-        pygame.draw.rect(screen, self.colour, self.rect, 4)
+        pygame.draw.rect(screen, self.color, self.rect, 4)
 
 
 def Main_Menu(window,surface):
@@ -164,10 +165,12 @@ def leaderboard(window,surface):
     screen = surface
     choice = False
     button_size = 90
-    button_list = []
-    Title = Button(SIZE[1]//2 - button_size*3,button_size,'Leader Board       High Score','single',False)
+    users = [['jacob',24],['test',2],['john',54],['smith',93]]
+    button_list = [Button(button_size*2,button_size,'Leader Board      High Score','single',False,(0, 45, 179))]
+    y_pos = button_list[0].rect.centery
     for user in users:
-        button_list.append(Button(SIZE[1]//2 - button_size*3,button_size,user[0]+"        "+user[1],'single',False))
+        y_pos += button_size + 40
+        button_list.append(Button(y_pos,button_size,user[0]+"      "+str(user[1]),'single',False))
 
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
@@ -203,4 +206,4 @@ if __name__ == "__main__":
     SIZE = (infoObject.current_w, infoObject.current_h - 30)
     screen = pygame.display.set_mode(SIZE,pygame.RESIZABLE)
     pygame.display.set_caption("NEAT-JUMP")
-    Game_Over_Single(SIZE,screen)
+    leaderboard(SIZE,screen)
