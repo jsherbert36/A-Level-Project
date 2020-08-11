@@ -1,4 +1,5 @@
 import math,pygame,random,sys,os,neat,pickle,shelve,json
+from Menu import pause_menu
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -10,6 +11,7 @@ high_net = None
 slow = False
 max_score_list = []
 game_over = False
+main_menu = False
 
 class Computer(pygame.sprite.Sprite):
     def __init__(self):
@@ -223,7 +225,7 @@ def choose_block_type(height):
         return 'still'
     
 def gameplay(genomes,config):
-    global game_over
+    global game_over,main_menu
     if game_over:
         for genome_id,genome in genomes: 
             genome.fitness = 0
@@ -277,9 +279,17 @@ def gameplay(genomes,config):
                 if event.key == pygame.K_ESCAPE:
                     game_over = True
                     return 
-                elif event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_s:
                     slow = not slow
-
+                elif event.key == pygame.K_SPACE:
+                    pause = pause_menu(SIZE,screen)
+                    if pause == "gameover":
+                        game_over = True
+                        return
+                    elif pause == 'main_menu':
+                        game_over = True
+                        main_menu = True
+                        return 
         screen.blit(background_image_1,(0,0)) 
         current_score = 0
         for i,player in enumerate(player_list):
@@ -312,7 +322,6 @@ def gameplay(genomes,config):
         
         if max_index >= len(player_list):
             max_index = len(player_list) - 1
-        print(player_list[max_index].fitness,player_list[max_index].final_distance,player_list[max_index].final_distance2)
         if player_list[max_index].rect.y < SIZE[0]//5 :            
             if block_y > -10:
                 block_x,block_y = set_block(block_x,block_y,block_width,tolerance)                
@@ -375,7 +384,7 @@ def gameplay(genomes,config):
     max_score_list.append(max_score)
 
 def run(window,surface):
-    global SIZE,screen,game_over
+    global SIZE,screen,game_over,main_menu
     config_file = os.path.join(PATH,"config2.txt")
     SIZE = window
     screen = surface
@@ -389,7 +398,12 @@ def run(window,surface):
         f = open("score_list.json","wt")        
         json.dump(max_score_list, f)
         f.close()
-
+    if main_menu:
+        return None
+    elif game_over:
+        return 'gameover'
+    else:
+        return None
 
 if __name__ == '__main__':
     os.environ['SDL_VIDEO_CENTERED'] = '1'

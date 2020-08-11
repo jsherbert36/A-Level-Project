@@ -1,4 +1,5 @@
-import math,pygame,random,sys,os,GameOver,json
+import math,pygame,random,sys,os,GameOver,json,Menu
+from Menu import pause_menu,game_over_single
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -220,6 +221,13 @@ def gameplay(window,surface):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return 'gameover', []
+                elif event.key == pygame.K_SPACE:
+                    pause = pause_menu(SIZE,screen)
+                    if pause == "gameover":
+                        return 'gameover',[]
+                    elif pause == 'main_menu':
+                        return None
+
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
@@ -276,7 +284,8 @@ def gameplay(window,surface):
 
         if player1.rect.top > SIZE[1]:
             game_over = True
-            return 'lost',[player1.score]
+            game_over_single(SIZE,screen,player1.score)
+            return None
         
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()

@@ -16,7 +16,7 @@ result = None
 while choice != 'gameover'and result != "gameover":
     choice = Menu.main_menu(SIZE,screen)
     if choice == 'single':
-        result,score = SinglePlayer.gameplay(SIZE,screen)
+        result = SinglePlayer.gameplay(SIZE,screen)
     elif choice == 'double':
         result,score = DoublePlayer.gameplay(SIZE,screen)
     elif choice == 'computer':
