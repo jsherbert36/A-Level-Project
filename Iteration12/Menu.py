@@ -244,9 +244,67 @@ def pause_menu(window,surface):
         pygame.display.flip()       
         clock.tick(60)
 
-def game_over_double(window,surface):
-    pass
+def game_over_double(window,surface,score):
+    global SIZE,screen
+    SIZE = window
+    screen = surface
+    choice = False
+    button_size = int(SIZE[0]//28.24)
+    button_list = []
+    username1_box = Text_Box([int(SIZE[0]//2.2),int(SIZE[1]//2.165)],button_size,"username")
+    username2_box = Text_Box([int(SIZE[0]//1.7),int(SIZE[1]//2.165)],button_size,"username")
+    button = Button([int(SIZE[0]//1.73),int(SIZE[1]//1.509)],button_size,str(score),'',False,font_path="freesansbold.ttf")
+    button_list += [username_box,button]
+    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Game_Over_Single_1.jpg")).convert()
+    background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
+    clock = pygame.time.Clock()
+    backspace = 0
+    user_list = json.load(open(os.path.join(PATH,"users.json"),"rt"))
 
+    while not choice:
+        mouse = pygame.mouse.get_pos() 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                choice = True
+                return 'gameover'
+            elif event.type == pygame.KEYDOWN:               
+                if event.key == pygame.K_ESCAPE:
+                    choice = True
+                    return 'gameover'
+                elif event.key == pygame.K_RETURN:
+                    choice = True
+                    if username_box.text == "":
+                        return None
+                    elif username_box.text in [i[0] for i in user_list]:
+                        index = [i[0] for i in user_list].index(username_box.text)
+                        if user_list[index][1] < score:
+                            user_list[index][1] = score
+                    else:
+                        user_list.append([username_box.text,score])
+                    f = open(os.path.join(PATH,"users.json"),"wt")        
+                    json.dump(user_list, f)
+                    f.close()
+                    return None
+                else:
+                    username_box.key_event(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                username_box.mouse_event(mouse)                   
+                if button.rect.collidepoint(mouse) and button.active:
+                    return button.action
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:          
+            if username_box.active:
+                backspace += 1
+                if backspace >= 3:
+                    username_box.text = username_box.text[:-1]
+                    backspace = 0
+        screen.blit(background_image_1,(0,0))              
+        button.update(mouse)
+        button.draw()
+        username_box.update(mouse)
+        username_box.draw()
+        pygame.display.flip()       
+        clock.tick(60)
 def scroll(distance,*lists):
     for list in lists:
         for item in list:
@@ -292,10 +350,10 @@ def leaderboard(window,surface):
                     for button in button_list:                      
                         if button.rect.collidepoint(mouse) and button.active:
                             return button.action
-                elif event.button == 4 and button_list[-1].rect.bottom < SIZE[1] - 30:
-                    scroll(-10,button_list)
-                elif event.button == 5 and button_list[0].rect.top > 30:
-                    scroll(10,button_list)
+                elif event.button == 4 and button_list[0].rect.top < 30:
+                    scroll(-20,button_list)
+                elif event.button == 5 and button_list[-1].rect.bottom > SIZE[1] - 30:
+                    scroll(20,button_list)
 
         pygame.display.flip()       
         clock.tick(60)
