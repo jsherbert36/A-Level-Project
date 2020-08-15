@@ -17,8 +17,13 @@ class Button():
         self.rect.center = pos
         self.action = action
         self.active = active
+        if self.active:
+            self.image = pygame.image.load(os.path.join(PATH,"images","Button1.png")).convert()
+            self.image = pygame.transform.smoothscale(self.image, [self.rect.width + 50, self.rect.height + 20])
 
     def draw(self):
+        if self.active:
+            screen.blit(self.image,self.)  #complete button image
         screen.blit(self.object,self.rect)
 
     def update(self,mouse):
@@ -162,9 +167,8 @@ def game_over_single(window,surface,score):
     clock = pygame.time.Clock()
     backspace = 0
     user_list = json.load(open(os.path.join(PATH,"users.json"),"rt"))
-
     while not choice:
-        mouse = pygame.mouse.get_pos() 
+        mouse = pygame.mouse.get_pos()        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 choice = True
