@@ -23,7 +23,7 @@ class Button():
 
     def draw(self):
         if self.active:
-            screen.blit(self.image,self.)  #complete button image
+            screen.blit(self.image,self.rect)  #complete button image
         screen.blit(self.object,self.rect)
 
     def update(self,mouse):
