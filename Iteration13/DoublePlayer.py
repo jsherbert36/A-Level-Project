@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,GameOver,json
+import math,pygame,random,sys,os,json
 from Menu import pause_menu
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -327,6 +327,22 @@ def gameplay(window,surface):
         for player in player_list:
             if player.rect.top > SIZE[1]:
                     player_list.pop(player_list.index(player))
+                    if player.second:
+                        for block in block_group_list[1]:
+                            block.kill()
+                        for coin in coin_group:
+                            if coin.rect.centerx > SIZE[0]//2:
+                                coin.kill()
+                        background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background2_Right_Blur.jpg")).convert()
+                        background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
+                    else:
+                        for block in block_group_list[0]:
+                            block.kill()
+                        for coin in coin_group:
+                            if coin.rect.centerx < SIZE[0]//2:
+                                coin.kill()
+                        background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background2_Left_Blur.jpg")).convert()
+                        background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
                     player.kill()
 
         if not player_list:

@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,Menu,GameOver,SinglePlayer,DoublePlayer,NEAT
+import math,pygame,random,sys,os,Menu,SinglePlayer,DoublePlayer,NEAT
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)

@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,GameOver,json,Menu
+import math,pygame,random,sys,os,json,Menu
 from Menu import pause_menu,game_over_single
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -223,11 +223,8 @@ def gameplay(window,surface):
                     return 'gameover', []
                 elif event.key == pygame.K_SPACE:
                     pause = pause_menu(SIZE,screen)
-                    if pause == "gameover":
-                        return 'gameover',[]
-                    elif pause == 'main_menu':
-                        return None
-
+                    if pause == "gameover": return 'gameover'
+                    elif pause == 'main_menu': return None
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:

@@ -6,7 +6,7 @@ GREY = (190, 190, 190)
 PATH = sys.path[0]
 
 class Button():
-    def __init__(self,pos,size,text,action,active,color=BLACK,font_path=os.path.join(PATH,"fonts","Folks-Bold.ttf")):
+    def __init__(self,pos,size,text,action,active,color=BLACK,font_path=os.path.join(PATH,"fonts","Folks-Bold.ttf"),left_justified = False):
         self.size = size
         self.font = pygame.font.Font(font_path,self.size)
         self.default_color = color
@@ -15,28 +15,49 @@ class Button():
         self.object = self.font.render(self.text, True, self.color)
         self.rect = self.object.get_rect()
         self.rect.center = pos
+        if left_justified:
+            self.rect.midleft = pos
         self.action = action
         self.active = active
         if self.active:
-            self.image = pygame.image.load(os.path.join(PATH,"images","Button1.png")).convert()
-            self.image = pygame.transform.smoothscale(self.image, [self.rect.width + 50, self.rect.height + 20])
+            self.default_color = GREY
+            self.image_list = [pygame.image.load(os.path.join(PATH,"images","Button1_Left.png")).convert_alpha(),
+                               pygame.image.load(os.path.join(PATH,"images","Button1_Center.png")).convert_alpha(),
+                               pygame.image.load(os.path.join(PATH,"images","Button1_Right.png")).convert_alpha()]
+            self.image_list = [pygame.transform.smoothscale(self.image_list[0], [int((self.rect.height + 10)//1.9), self.rect.height + SIZE[1]//72]),
+                               pygame.transform.smoothscale(self.image_list[1], [self.rect.width, self.rect.height + SIZE[1]//72]),
+                               pygame.transform.smoothscale(self.image_list[2], [int((self.rect.height + 10)//1.9), self.rect.height + SIZE[1]//72])]
+            self.image_rect_list = [self.image_list[0].get_rect(),
+                                    self.image_list[1].get_rect(),
+                                    self.image_list[2].get_rect()]
+            self.image_rect_list[1].center = self.rect.center
+            self.image_rect_list[0].midright = self.rect.midleft
+            self.image_rect_list[2].midleft = self.rect.midright
 
     def draw(self):
         if self.active:
-            screen.blit(self.image,self.rect)  #complete button image
+            for image,rect in zip(self.image_list,self.image_rect_list):
+                screen.blit(image,rect)
         screen.blit(self.object,self.rect)
 
     def update(self,mouse):
         if self.rect.collidepoint(mouse) and self.active:
-            self.color = RED
+            self.color = WHITE
         else:
             self.color = self.default_color
         self.object = self.font.render(self.text, True, self.color)
 
 class BackButton(Button):
-    def __init__(self,top,bottom):
-        pass
-
+    def __init__(self,position,text="Back"):
+        if position == "topright":
+            self.pos = [SIZE[0]-(SIZE[0]//20),SIZE[1]//18]
+        elif position == "bottomright":
+            self.pos = [SIZE[0]-(SIZE[0]//20),SIZE[1]-(SIZE[1]//18)]
+        elif position == "topleft":
+            self.pos = [SIZE[0]//20,SIZE[1]//18]
+        elif position == "bottomleft":
+            self.pos = [SIZE[0]//20,SIZE[1]-(SIZE[1]//18)]
+        super().__init__(self.pos,36,text,"back",True)
 
 class Text_Box():
     def __init__(self,position,size,field):
@@ -111,21 +132,26 @@ def space_buttons(button_list,gap=math.inf):
         for button in button_list[len(button_list)//2+1:]:
             button.rect.top = y_pos
             y_pos += distance + height
+    for button in button_list:
+        if button.active:
+            button.image_rect_list[1].center = button.rect.center
+            button.image_rect_list[0].midright = button.rect.midleft
+            button.image_rect_list[2].midleft = button.rect.midright
 
 def main_menu(window,surface):
     global SIZE,screen
     SIZE = window
     screen = surface
     choice = False
-    button_size = 90
+    button_size = 60
     button_list = []
     button_list.append(Button([SIZE[0]//2,0],button_size,'Single Player','single',True))
     button_list.append(Button([SIZE[0]//2,0],button_size,'Two Player','double',True))
     button_list.append(Button([SIZE[0]//2,0],button_size,'AI Player','computer',True))
     button_list.append(Button([SIZE[0]//2,0],button_size,'Watch it Learn','learn',True))
     button_list.append(Button([SIZE[0]//2,0],button_size,'Leader Board','leaderboard',True))
-    space_buttons(button_list,50)
-    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
+    space_buttons(button_list,SIZE[1]//10)
+    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background1-Blur.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
 
@@ -159,7 +185,7 @@ def game_over_single(window,surface,score):
     choice = False
     button_size = int(SIZE[0]//28.24)
     button_list = []
-    username_box = Text_Box([int(SIZE[0]//1.9),int(SIZE[1]//2.165)],button_size,"Username")
+    username_box = Text_Box([int(SIZE[0]//1.9),int(SIZE[1]//2.165)],button_size,"")
     button = Button([int(SIZE[0]//1.73),int(SIZE[1]//1.509)],button_size,str(score),'',False,font_path="freesansbold.ttf")
     button_list += [username_box,button]
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Game_Over_Single_1.jpg")).convert()
@@ -217,7 +243,7 @@ def pause_menu(window,surface):
     SIZE = window
     screen = surface
     choice = False
-    button_size = 90
+    button_size = 60
     button_list = []
     button_list.append(Button([SIZE[0]//2,0],button_size,'Return to Game','play',True))
     button_list.append(Button([SIZE[0]//2,0],button_size,'Main Menu','main_menu',True))
@@ -309,6 +335,7 @@ def game_over_double(window,surface,score):
         username_box.draw()
         pygame.display.flip()       
         clock.tick(60)
+
 def scroll(distance,*lists):
     for list in lists:
         for item in list:
@@ -319,19 +346,21 @@ def leaderboard(window,surface):
     SIZE = window
     screen = surface
     choice = False
-    button_size = 90
+    button_size = 70
     try:
         users = json.load(open(os.path.join(PATH,"users.json"),"rt"))
-        users = sorted(users,key=lambda i:i[1])
+        users = sorted(users,key=lambda i:i[1],reverse=True)
     except FileNotFoundError:
         users = []
-    button_list = [Button([SIZE[0]//2,button_size],button_size,'Leader Board      High Score','single',False,(0, 45, 179))]
-    y_pos = button_list[0].rect.centery
+    button_list = [Button([SIZE[0]//2 - 420,button_size],80,'User','single',False,(0, 45, 179),left_justified=True),
+                   Button([SIZE[0]//2 + 200,button_size],80,'High Score','single',False,(0, 45, 179),left_justified=True)]
+    y_pos = button_list[0].rect.centery + 10
     for user in users:
-        y_pos += button_size + 40
-        button_list.append(Button([SIZE[0]//2,y_pos],button_size,user[0]+"      "+str(user[1]),'single',False))
-
-    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background.jpg")).convert()
+        y_pos += button_size + 30
+        button_list += [Button([SIZE[0]//2 - 420,y_pos],button_size,user[0],'single',False,left_justified=True),
+                        Button([SIZE[0]//2 + 200,y_pos],button_size,str(user[1]),'single',False,left_justified=True)]
+    button_list.append(BackButton("topleft"))
+    background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background1-Blur.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
 
@@ -355,9 +384,9 @@ def leaderboard(window,surface):
                         if button.rect.collidepoint(mouse) and button.active:
                             return button.action
                 elif event.button == 4 and button_list[0].rect.top < 30:
-                    scroll(-20,button_list)
-                elif event.button == 5 and button_list[-1].rect.bottom > SIZE[1] - 30:
-                    scroll(20,button_list)
+                    scroll(-20,button_list[:-1])
+                elif event.button == 5 and button_list[-2].rect.bottom > SIZE[1] - 30:
+                    scroll(20,button_list[:-1])
 
         pygame.display.flip()       
         clock.tick(60)
