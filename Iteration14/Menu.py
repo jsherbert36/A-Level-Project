@@ -47,7 +47,7 @@ class Button():
             self.color = self.default_color
         self.object = self.font.render(self.text, True, self.color)
 
-class BackButton(Button):
+class CornerButton(Button):
     def __init__(self,position,text="Back"):
         if position == "topright":
             self.pos = [SIZE[0]-(SIZE[0]//20),SIZE[1]//18]
@@ -197,7 +197,7 @@ def game_over_single(window,surface,score):
                     Button([SIZE[0]//3,int(SIZE[1]//2.165)],button_size,"Username:",'',False,left_justified=True),
                     Button([SIZE[0]//3,int(SIZE[1]//2.165)+button_size*2],button_size,"Score:",'',False,left_justified=True),
                     Button([SIZE[0]//2,SIZE[1]//4],button_size + 20,"Save Your Score:",'',False),
-                    BackButton("bottomright",text="Done")]
+                    CornerButton("bottomright",text="Done")]
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background1-Blur.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
@@ -291,7 +291,7 @@ def game_over_double(window,surface,score):
                     Button([int(SIZE[0]//1.83),int(SIZE[1]//2.165)+button_size*2],button_size,"Score:",'',False,left_justified=True),
                     Button([SIZE[0]//4,SIZE[1]//3],button_size,"Player 1",'',False),
                     Button([int(SIZE[0]//1.33),SIZE[1]//3],button_size,"Player 2",'',False),
-                    BackButton("bottomright",text="Done")]
+                    CornerButton("bottomright",text="Done")]
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background1-Blur.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
@@ -363,7 +363,7 @@ def leaderboard(window,surface):
         y_pos += button_size + 30
         button_list += [Button([int(SIZE[0]//3.55),y_pos],button_size,user[0],'single',False,left_justified=True),
                         Button([int(SIZE[0]//1.66),y_pos],button_size,str(user[1]),'single',False,left_justified=True)]
-    button_list.append(BackButton("topleft"))
+    button_list.append(CornerButton("topleft"))
     background_image_1 = pygame.image.load(os.path.join(PATH,"images","Background1-Blur.jpg")).convert()
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
