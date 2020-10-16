@@ -346,8 +346,11 @@ def gameplay(window,surface):
                     player.kill()
 
         if not player_list:
-            game_over_double(SIZE,screen,[player1.score,player2.score])
-            return None
+            result = game_over_double(SIZE,screen,[player1.score,player2.score])
+            if result == 'gameover':
+                return 'gameover'
+            else:
+                return None
         
         screen.blit(background_image_1,(0,0))
         all_sprites_group.update()

@@ -82,7 +82,7 @@ class Text_Box():
             self.active = False  
 
     def key_event(self,event):
-        if self.active and len(self.text) < 12 and event.key not in [pygame.K_BACKSPACE,pygame.K_SPACE,pygame.K_RETURN]:
+        if self.active and len(self.text) < 12 and event.key not in [pygame.K_BACKSPACE,pygame.K_SPACE,pygame.K_RETURN,pygame.K_TAB]:
             self.text += event.unicode
 
     def update(self,mouse):
@@ -173,6 +173,18 @@ def main_menu(window,surface):
         pygame.display.flip()       
         clock.tick(60)
 
+def update_database(score, text):
+    user_list = json.load(open(os.path.join(PATH,"users.json"),"rt"))
+    if text in [i[0] for i in user_list] and text != "":
+        index = [i[0] for i in user_list].index(text)
+        if user_list[index][1] < score:
+            user_list[index][1] = score
+    elif text != "":
+        user_list.append([text,score])
+    f = open(os.path.join(PATH,"users.json"),"wt")        
+    json.dump(user_list, f)
+    f.close()
+
 def game_over_single(window,surface,score):
     global SIZE,screen
     SIZE = window
@@ -190,7 +202,6 @@ def game_over_single(window,surface,score):
     background_image_1 = pygame.transform.smoothscale(background_image_1, SIZE)
     clock = pygame.time.Clock()
     backspace = 0
-    user_list = json.load(open(os.path.join(PATH,"users.json"),"rt"))
     while not choice:
         mouse = pygame.mouse.get_pos()        
         for event in pygame.event.get():
@@ -202,21 +213,14 @@ def game_over_single(window,surface,score):
                     choice = True
                     return 'gameover'
                 elif event.key == pygame.K_RETURN:
-                    username_box.active = False
+                    update_database(score, username_box.text)
+                    return None
                 else:
                     username_box.key_event(event)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 username_box.mouse_event(mouse) 
                 if button_list[-1].rect.collidepoint(mouse):
-                    if username_box.text in [i[0] for i in user_list] and username_box.text != "":
-                        index = [i[0] for i in user_list].index(username_box.text)
-                        if user_list[index][1] < score:
-                            user_list[index][1] = score
-                    elif username_box.text != "":
-                        user_list.append([username_box.text,score])
-                    f = open(os.path.join(PATH,"users.json"),"wt")        
-                    json.dump(user_list, f)
-                    f.close()
+                    update_database(score, username_box.text)
                     return None
         if pygame.key.get_pressed()[pygame.K_BACKSPACE]:          
             if username_box.active:
@@ -279,8 +283,8 @@ def game_over_double(window,surface,score):
     username_box2 = Text_Box([int(SIZE[0]//1.29),int(SIZE[1]//2.165)],button_size,200,left_justified=True)
     button_list = [username_box1,username_box2]
     button_list += [Button([int(SIZE[0]//3.49),int(SIZE[1]//2.165)+button_size*2],button_size,str(score[0]),'',False,left_justified=True),
-                    Button([int(SIZE[0]//9.6),int(SIZE[1]//2.165)],button_size,"Username:",'',False,left_justified=True),
-                    Button([int(SIZE[0]//9.6),int(SIZE[1]//2.165)+button_size*2],button_size,"Score:",'',False,left_justified=True),
+                    Button([int(SIZE[0]//12.13),int(SIZE[1]//2.165)],button_size,"Username:",'',False,left_justified=True),
+                    Button([int(SIZE[0]//12.13),int(SIZE[1]//2.165)+button_size*2],button_size,"Score:",'',False,left_justified=True),
                     Button([SIZE[0]//2,SIZE[1]//6],button_size + 30,"Save Your Score:",'',False),                   
                     Button([int(SIZE[0]//1.29),int(SIZE[1]//2.165)+button_size*2],button_size,str(score[1]),'',False,left_justified=True),
                     Button([int(SIZE[0]//1.83),int(SIZE[1]//2.165)],button_size,"Username:",'',False,left_justified=True),
@@ -305,8 +309,13 @@ def game_over_double(window,surface,score):
                     choice = True
                     return 'gameover'
                 elif event.key == pygame.K_RETURN:
-                    username_box1.active = False
-                    username_box2.active = False
+                    update_database(score[0], button_list[0].text)
+                    update_database(score[1], button_list[1].text)
+                    return None
+                elif event.key == pygame.K_TAB:
+                    if username_box1.active == True:
+                        username_box1.active = False
+                        username_box2.active = True
                 else:
                     username_box1.key_event(event)
                     username_box2.key_event(event)
@@ -314,16 +323,8 @@ def game_over_double(window,surface,score):
                 username_box1.mouse_event(mouse) 
                 username_box2.mouse_event(mouse)
                 if button_list[-1].rect.collidepoint(mouse):
-                    for j,box in enumerate(button_list[:2]):
-                        if box.text in [i[0] for i in user_list] and box.text != "":
-                            index = [i[0] for i in user_list].index(box.text)
-                            if user_list[index][1] < score[j]:
-                                user_list[index][1] = score[j]
-                        elif box.text != "":
-                            user_list.append([box.text,score[j]])
-                    f = open(os.path.join(PATH,"users.json"),"wt")        
-                    json.dump(user_list, f)
-                    f.close()
+                    update_database(score[0], button_list[0].text)
+                    update_database(score[1], button_list[1].text)
                     return None
         if pygame.key.get_pressed()[pygame.K_BACKSPACE]:  
             for box in button_list[:2]:
@@ -387,12 +388,12 @@ def leaderboard(window,surface):
                         if button.rect.collidepoint(mouse) and button.active:
                             return button.action
                 elif event.button == 4 and button_list[0].rect.top < 30:
-                    scroll(-25,button_list[:-1])
+                    scroll(-30,button_list[:-1])
                 elif event.button == 5 and button_list[-2].rect.bottom > SIZE[1] - 30:
-                    scroll(25,button_list[:-1])
+                    scroll(30,button_list[:-1])
 
         pygame.display.flip()       
-        clock.tick(60)
+        clock.tick(120)
 
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_CENTERED'] = '1'
