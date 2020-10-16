@@ -9,8 +9,6 @@ pygame.init()
 infoObject = pygame.display.Info()
 SIZE = (infoObject.current_w - 100, infoObject.current_h - 100)
 screen = pygame.display.set_mode(SIZE,pygame.NOFRAME,0)
-#SIZE = (infoObject.current_w, infoObject.current_h)
-#screen = pygame.display.set_mode(SIZE,pygame.FULLSCREEN)
 pygame.display.set_caption("NEAT JUMP")
 pygame.display.set_icon(pygame.image.load(os.path.join(PATH,"images",("frame-1.png"))).convert_alpha())
 choice = None
