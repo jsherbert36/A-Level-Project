@@ -6,7 +6,6 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 PATH = sys.path[0]
 
-
 class Player(pygame.sprite.Sprite):
     def __init__(self,x_pos):
         super().__init__()
