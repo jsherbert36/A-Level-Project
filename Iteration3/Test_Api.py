@@ -1,5 +1,3 @@
-
-
 def move(player_pos,current_pos,next_pos,next_type,next_centre,normal_speed,player_speed,size,player_direction,next_direction,block_width,horizontal_direction,current_type,current_centre):
     if abs(next_pos[0] - player_pos[0]) > size[0]//2:
         if player_pos[0] < next_pos[0]:
