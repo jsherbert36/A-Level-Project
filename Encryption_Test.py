@@ -39,13 +39,13 @@ def encrypt(string, key):
             cipher.append(chr(x))
         else:
             cipher.append(string[i]) 
-    return("" . join(cipher)) 
+    return("" . join(cipher))
 
 def decrypt(cipher_text, key): 
     orig = [] 
     for i in range(len(cipher_text)): 
         if cipher_text[i].isalpha():
-            x = ((ord(cipher_text[i]) - ord(key[i])) % 26) + ord('A')       
+            x = ((ord(cipher_text[i]) - ord(key[i]) + 26) % 26) + ord('A')       
             orig.append(chr(x))
         else: 
             orig.append(cipher_text[i])           
