@@ -24,7 +24,7 @@ class Computer(pygame.sprite.Sprite):
         self.image = self.image_list[0]
         self.image_num = 0
         self.rect = self.image.get_rect()
-        self.rect.x = SIZE[0]//2
+        self.rect.x = round(SIZE[0] * 0.25)
         self.rect.y = SIZE[1] - self.width
         self.direction = 'up'
         self.normal_speed = 22
@@ -56,7 +56,7 @@ class Computer(pygame.sprite.Sprite):
             self.rect.right = SIZE[0]
         elif self.rect.x < 0:
             self.rect.x = 0
-        if self.speed > self.terminal_velocity:
+        if self.speed > self.terminal_velocity and self.direction == "down":
             self.speed = self.terminal_velocity
 
     def change_speed(self):
@@ -88,15 +88,14 @@ class Computer(pygame.sprite.Sprite):
             if block.number not in self.block_hit_list:
                 self.block_hit_list.append(block.number)
                 self.fitness += 5
+            if block.type == 'spring':
+                self.speed = 35
 
     def set_score(self,start_block):
         self.height = start_block.rect.top - self.rect.bottom 
         if self.height > self.score:
             self.score = self.height
             self.score_count = 0
-        #if self.block_count > 1:
-        #    self.fitness -= 1
-        #    self.block_count = 0
         if self.none_score > 250:
             self.fitness -= 2
             self.none_score = 0
@@ -107,50 +106,11 @@ class Computer(pygame.sprite.Sprite):
         elif self.horizontal_direction == 'left':
             self.rect.x -= 9
 
-    def check_directions(self,SIZE,block_group):        
-        self.final_distance = [-1,-1,-1,-1] #[right,left,down,up]
-        right_rect = pygame.Rect(self.rect.right, self.rect.y, SIZE[0], self.width)
-        distance = []
-        for block in block_group:
-            if right_rect.colliderect(block.rect): distance.append(block.rect.x - right_rect.right)
-        if len(distance) > 0: self.final_distance[0] = min(distance)
-        distance = []
-        left_rect = pygame.Rect(0 ,self.rect.y, self.rect.left, self.width)
-        for block in block_group:
-            if left_rect.colliderect(block.rect): distance.append(self.rect.right - block.rect.left)
-        if len(distance) > 0: self.final_distance[1] = min(distance)
-        distance = []
-        down_rect = pygame.Rect(self.rect.x, self.rect.bottom, self.width, SIZE[0] - self.rect.bottom)
-        for block in block_group:
-            if down_rect.colliderect(block.rect): distance.append(block.rect.top - self.rect.bottom)
-        if len(distance) > 0: self.final_distance[2] = min(distance)
-        distance = []
-        up_rect = pygame.Rect(self.rect.x, 0, self.width, self.rect.top)
-        for block in block_group:
-            if up_rect.colliderect(block.rect): distance.append(self.rect.top - block.rect.bottom)
-        if len(distance) > 0: self.final_distance[3] = min(distance)
-        return self.final_distance
-
-    def check_quadrants(self,SIZE,block_group):
-        self.final_distance2 = [-1,-1,-1,-1]
-        distance = [[],[],[],[]]
-        for block in block_group:
-            if block.rect.centerx > self.rect.centerx and block.rect.centery < self.rect.centery:
-                distance[0].append(math.hypot((block.rect.centerx - self.rect.centerx),(self.rect.centery - block.rect.centery)))
-            elif block.rect.centerx < self.rect.centerx and block.rect.centery > self.rect.centery:
-                distance[1].append(math.hypot((self.rect.centerx - block.rect.centerx),(block.rect.centery - self.rect.centery)))
-            elif block.rect.centerx < self.rect.centerx and block.rect.centery < self.rect.centery:
-                distance[2].append(math.hypot((self.rect.centerx - block.rect.centerx),(self.rect.centery - block.rect.centery)))
-            elif block.rect.centerx > self.rect.centerx and block.rect.centery > self.rect.centery:
-                distance[3].append(math.hypot((block.rect.centerx - self.rect.centerx),(block.rect.centery - self.rect.centery)))
-        for i in range(4):
-            if len(distance[i]) > 0:
-                self.final_distance2[i] = min(distance[i])
-        return self.final_distance2
-
     def set_inputs(self, block_group):
         for block in block_group:
             if block.number == self.current_block + 1:
+                self.next_pos = block.rect.midtop
+            elif block.number > self.current_block + 1 and block.rect.top > self.rect.bottom and self.speed > self.terminal_velocity:
                 self.next_pos = block.rect.midtop
         self.next_distance = [self.rect.centerx - self.next_pos[0],self.rect.top - self.next_pos[1]]
         self.current_distance = [self.rect.centerx - self.current_pos[0], self.rect.top - self.current_pos[1]]
@@ -166,6 +126,7 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = position
+        self.type = "still"
 
     def update(self):
         pass
@@ -175,6 +136,7 @@ class SideBlock(Block):
         super().__init__(position,block_width,number)
         self.direction = random.choice(['left','right'])
         self.distance = 120
+        self.type = "horizontal"
         if position[0] < SIZE[0]//2:
             if self.position[0] > SIZE[0]//2 - self.distance - self.block_width:
                 self.position[0] = SIZE[0]//2 - self.distance - self.block_width
@@ -201,7 +163,8 @@ class VerticalBlock(Block):
         super().__init__(position,block_width,number)
         self.direction = random.choice(['up','down'])
         self.distance = distance
-        
+        self.type = "vertical"
+
     def update(self):
         if self.rect.centery < self.position[1] - self.distance:
             self.direction = 'down'
@@ -211,6 +174,16 @@ class VerticalBlock(Block):
             self.rect.y -= 1
         elif self.direction == 'down':
             self.rect.y += 1
+
+class SpringBlock(Block):
+    def __init__(self,position,block_width,number):
+        super().__init__(position,block_width,number)
+        self.type = 'spring'
+        self.image = pygame.image.load(os.path.join(PATH,"images","Bounce_Block.png")).convert_alpha()
+        self.image = pygame.transform.smoothscale(self.image, [self.block_width, 20])
+
+    def update(self):
+        pass
 
 def move(direction,block_y,block_group,player_list,start_block):
     for block in block_group:
@@ -223,18 +196,18 @@ def move(direction,block_y,block_group,player_list,start_block):
     block_y += direction
     return block_y
     
-def set_block(block_x,block_y,block_width,tolerance):  #changed
-    block_y -= random.randint(150,160)
+def set_block(block_x,block_y,block_width,tolerance):
+    block_y -= random.randint(148,155)
     far_left = block_x - block_width
     far_right = SIZE[0]- block_x - block_width*2
     block_x += random.randint(-1 * min(tolerance*2,far_left),min(far_right,tolerance*2))
-    return block_x//2,block_y
+    return block_x,block_y
 
 def choose_block_type(height):
     if height > 3000 and height < 10000:
         return random.choice(['move','still','still','still','still','still','vertical'])
     elif height >= 10000:
-        return random.choice(['move','still','still','still','vertical'])
+        return random.choice(['move','still','still','still','vertical','move','vertical','spring'])
     else:
         return 'still'
     
@@ -268,12 +241,12 @@ def gameplay(genomes,config):
     start_block = Block([0,SIZE[1]-20],SIZE[0],block_count)
     block_count += 1
     block_x,block_y = round(SIZE[0]*0.25),SIZE[1] - 50
-    new_block = Block([block_x,block_y], block_width,block_count)
+    new_block = Block([block_x//2,block_y], block_width,block_count)
     block_count += 1
     block_group.add(new_block)
     while block_y > 70:
         block_x,block_y = set_block(block_x,block_y,block_width,tolerance) 
-        new_block = Block([block_x,block_y], block_width,block_count)
+        new_block = Block([block_x//2,block_y], block_width,block_count)
         block_count += 1
         block_group.add(new_block)
     clock = pygame.time.Clock()
@@ -343,13 +316,15 @@ def gameplay(genomes,config):
                 block_x,block_y = set_block(block_x,block_y,block_width,tolerance)                
                 block_type = choose_block_type(player_list[max_index].score)
                 if block_type == 'move':
-                    new_block = SideBlock([block_x,block_y], block_width,block_count)
+                    new_block = SideBlock([block_x//2,block_y], block_width,block_count)
                 elif block_type == 'still':
-                    new_block = Block([block_x,block_y], block_width,block_count)
+                    new_block = Block([block_x//2,block_y], block_width,block_count)
                 elif block_type == 'vertical':
                     block_y -= vertical_distance//2 
-                    new_block = VerticalBlock([block_x,block_y], block_width, vertical_distance,block_count)
-                    block_y -= vertical_distance//2            
+                    new_block = VerticalBlock([block_x//2,block_y], block_width, vertical_distance,block_count)
+                    block_y -= vertical_distance//2 
+                elif block_type == 'spring':
+                    new_block = SpringBlock([block_x//2,block_y], block_width,block_count)
                 block_count += 1
                 block_group.add(new_block)
 
@@ -358,14 +333,16 @@ def gameplay(genomes,config):
 
         if count % 13 == 0:
             tolerance = int(round(60/(1+1.0003**(10000-max_score)) + 190))
-
-        if player_list[max_index].rect.y < 0:
+      
+        if player_list[max_index].rect.y < -SIZE[1]//6:
+            block_y = move(20,block_y,block_group,player_list,start_block)
+        elif player_list[max_index].rect.y < 0:
             block_y = move(11,block_y,block_group,player_list,start_block)
         elif player_list[max_index].rect.y < SIZE[1]//6 and player_list[max_index].rect.y > 0:
             block_y = move(7,block_y,block_group,player_list,start_block)
         elif player_list[max_index].rect.y < SIZE[1]//3 and player_list[max_index].rect.y > SIZE[1]//6:
             block_y = move(4,block_y,block_group,player_list,start_block)
-        print(player_list[max_index].none_score,player_list[max_index].fitness,player_list[max_index].block_hit_list)
+        print(player_list[max_index].fitness)
         for block in block_group:
             if block.rect.y > SIZE[1] * 2:
                 block.kill()
@@ -379,10 +356,16 @@ def gameplay(genomes,config):
 
         screen.blit(background_image_1,(0,0))     
         block_group.update()
+        for block in block_group:
+            block.rect.x += round(SIZE[0]*0.25)
         block_group.draw(screen)
+        for block in block_group:
+            block.rect.x -= round(SIZE[0]*0.25)
         for player in player_list:
             player.update()
+            player.rect.x += round(SIZE[0]*0.25)
             screen.blit(player.image,player.rect)
+            player.rect.x -= round(SIZE[0]*0.25)
 
         score_display = score_font.render("Max Score " + str(max_score), True, BLACK)
         screen.blit(score_display,(SIZE[0]//20, SIZE[1]//20))
@@ -405,9 +388,9 @@ def run(window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    best_genome = population.run(gameplay, 500)
+    best_genome = population.run(gameplay, 5)
     if __name__ == "__main__" and not game_over:
-        test_database = shelve.open("test_database")
+        test_database = shelve.open("test_database1")
         test_database["test"] = high_net
         test_database.close()
         f = open("score_list.json","wt")        
