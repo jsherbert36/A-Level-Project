@@ -388,7 +388,7 @@ def run(window,surface):
     screen = surface
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation,config_file)
     population = neat.Population(config)
-    best_genome = population.run(gameplay, 5)
+    best_genome = population.run(gameplay, 25)
     if __name__ == "__main__" and not game_over:
         test_database = shelve.open("test_database1")
         test_database["test"] = high_net
