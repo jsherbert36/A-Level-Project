@@ -401,4 +401,4 @@ if __name__ == "__main__":
     SIZE = (infoObject.current_w, infoObject.current_h - 30)
     screen = pygame.display.set_mode(SIZE,pygame.RESIZABLE)
     pygame.display.set_caption("NEAT-JUMP")
-    game_over_double(SIZE,screen,[0,0])
+    game_over_double(SIZE,screen,[202402,1244])
