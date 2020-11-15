@@ -1,4 +1,4 @@
-import math,pygame,random,sys,os,json,shelve,pickle
+import math,pygame,random,sys,os,json,pickle
 from Menu import pause_menu,game_over_single
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -29,8 +29,6 @@ class ComputerPlayer(pygame.sprite.Sprite):
         self.current_block = 0
         self.current_pos = [SIZE[0]//2,SIZE[1] - 20]
         self.horizontal_direction = 'none'
-        self.score_count = 0
-        self.final_distance = []
         self.block_hit_list = []
         self.fitness = 0
         self.block_count = 0
@@ -83,7 +81,6 @@ class ComputerPlayer(pygame.sprite.Sprite):
         self.height = start_block.rect.top - self.rect.bottom 
         if self.height > self.score:
             self.score = self.height
-            self.score_count = 0
         if self.block_count > 2:
             self.fitness -= 1
             self.block_count = 0
@@ -353,8 +350,9 @@ def gameplay(window,surface):
         block_group_list[1].add(new_block2)
         if random.choice([True,False]):
             coin_group.add(new_block1.coin,new_block2.coin)     
-    player_database = shelve.open("test_database") 
-    player1_net = player_database["test"] 
+    f = open("Trained_AI.obj","rb")
+    player1_net = pickle.load(f)
+    f.close()
     player1 = ComputerPlayer()
     player1.second = False
     player2 = Player(round(SIZE[0]*0.75),True)
@@ -461,7 +459,6 @@ def gameplay(window,surface):
             for block in block_group:
                 if block.rect.y > SIZE[1] + 30 or (block.type == "onetime" and block.hit > 0):
                     block.kill()
-        print(player1.current_block)
         for player in player_list:
             if player.rect.top > SIZE[1]:
                     player_list.pop(player_list.index(player))
