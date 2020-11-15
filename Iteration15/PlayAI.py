@@ -382,7 +382,6 @@ def gameplay(window,surface):
                         return 'gameover'
                     elif pause == 'main_menu':
                         return 'lost',[player1.score,player2.score]
-
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
             player2.move('right')
@@ -406,7 +405,6 @@ def gameplay(window,surface):
             player1.horizontal_direction = 'none'
         else:
             player1.none_score += 1
-
         for i,player in enumerate(player_list):
             player.set_score(start_block)
             if player.score > high_score:
