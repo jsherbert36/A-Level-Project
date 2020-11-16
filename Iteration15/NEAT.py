@@ -36,8 +36,6 @@ class Computer(pygame.sprite.Sprite):
         self.current_pos = [SIZE[0]//2,SIZE[1] - 20]
         self.horizontal_direction = 'none'
         self.score_count = 0
-        self.final_distance = []
-        self.final_distance2 = []
         self.block_hit_list = []
         self.fitness = 0
         self.block_count = 0
