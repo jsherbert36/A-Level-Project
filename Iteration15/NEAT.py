@@ -340,7 +340,6 @@ def gameplay(genomes,config):
             block_y = move(7,block_y,block_group,player_list,start_block)
         elif player_list[max_index].rect.y < SIZE[1]//3 and player_list[max_index].rect.y > SIZE[1]//6:
             block_y = move(4,block_y,block_group,player_list,start_block)
-        print(player_list[max_index].fitness)
         for block in block_group:
             if block.rect.y > SIZE[1] * 2:
                 block.kill()
