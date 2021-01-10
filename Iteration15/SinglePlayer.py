@@ -314,7 +314,8 @@ if __name__ == "__main__":
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
     infoObject = pygame.display.Info()
-    SIZE = (infoObject.current_w, infoObject.current_h)
+    #SIZE = (infoObject.current_w, infoObject.current_h)
+    SIZE = (infoObject.current_w - 350, infoObject.current_h - 300)
     screen = pygame.display.set_mode(SIZE)
     if gameplay(SIZE,screen) == 'gameover':
         pass
