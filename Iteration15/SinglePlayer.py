@@ -315,7 +315,7 @@ if __name__ == "__main__":
     pygame.init()
     infoObject = pygame.display.Info()
     #SIZE = (infoObject.current_w, infoObject.current_h)
-    SIZE = (infoObject.current_w - 100, infoObject.current_h - 120)
+    SIZE = (1500,700)
     screen = pygame.display.set_mode(SIZE)
     if gameplay(SIZE,screen) == 'gameover':
         pass
